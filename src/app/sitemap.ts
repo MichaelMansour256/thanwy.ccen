@@ -28,16 +28,16 @@ const pages: {
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const [defaultLocale, ...otherLocales] = routing.locales;
+  const baseUrl = siteConfig.url.replace(/\/$/, "");
   const languages = Object.fromEntries(
-    [defaultLocale, ...otherLocales].map((locale) => [locale, `${siteConfig.url}/${locale}`])
+    routing.locales.map((locale) => [locale, `${baseUrl}/${locale}`])
   );
 
   return pages
     .filter((page) => page.feature === undefined || features[page.feature])
     .flatMap((page) =>
       routing.locales.map((locale) => ({
-        url: `${siteConfig.url}/${locale}${page.path}`,
+        url: `${baseUrl}/${locale}${page.path}`,
         lastModified: new Date(),
         changeFrequency: page.changeFrequency,
         priority: page.priority,

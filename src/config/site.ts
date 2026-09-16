@@ -75,8 +75,8 @@ export const siteConfig = {
 
   /** Social links (rendered on the home hero and the contact page). */
   social: [
-    { name: "Facebook", url: "https://www.facebook.com/thanwy.ccen" },
-    { name: "Instagram", url: "https://www.instagram.com/thanwy.ccen" },
+    { name: "Facebook", url: "https://www.facebook.com/shababe.thanwy" },
+    { name: "Instagram", url: "https://www.instagram.com/thanwy.meeting.ccen/" },
   ] satisfies SocialLink[],
 
   /** Branding assets under /public — replace these files for a new meeting. */

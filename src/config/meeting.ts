@@ -45,15 +45,15 @@ export const meetingConfig = {
    */
   schedule: {
     weekday: 5, // Friday
-    time: "12:30",
+    time: "3:30",
     /** Weekly-meeting card line. */
-    labelAr: "كل جمعة · ١٢:٣٠ م",
-    labelEn: "Every Friday · 12:30 PM",
+    labelAr: "كل جمعة · ٠٣:٣٠ م",
+    labelEn: "Every Friday · 03:30 PM",
     /** Reminder/push text building blocks. */
     dayNameAr: "الجمعة",
     dayNameEn: "Friday",
-    timeLabelAr: "١٢:٣٠",
-    timeLabelEn: "12:30 PM",
+    timeLabelAr: "٠٣:٣٠",
+    timeLabelEn: "03:30 PM",
   },
 
   /** Meeting location (the church itself lives in `siteConfig.church`). */

@@ -173,7 +173,11 @@ export default function AdminPage() {
   const headers = { "x-admin-password": password };
   const fetchFolders = useCallback(async () => {
     const res = await fetch("/api/gallery");
-    setFolders(await res.json());
+    const data = await res.json();
+    // /api/gallery answers 500 with { error: ... } when Cloudinary is not
+    // configured — storing that object in `folders` made `folders.find(...)`
+    // throw and crash the whole dashboard. Keep it an array, always.
+    setFolders(Array.isArray(data) ? data : []);
   }, []);
   const fetchSpecialEvents = useCallback(async () => {
     const res = await fetch("/api/events");

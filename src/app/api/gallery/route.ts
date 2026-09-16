@@ -36,7 +36,10 @@ export async function GET() {
     );
 
     return NextResponse.json(events.filter((e) => e.photos.length > 0));
-  } catch {
+  } catch (err) {
+    // Log the real cause (missing/invalid Cloudinary credentials, network…)
+    // so it shows up in the Vercel function logs instead of failing silently.
+    console.error("GET /api/gallery failed:", err);
     return NextResponse.json({ error: "Failed to fetch gallery" }, { status: 500 });
   }
 }

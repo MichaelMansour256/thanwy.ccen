@@ -42,3 +42,9 @@ test-onesignal-filters.js
 test-*.js
 public/notifications-history.json
 
+
+# scratch/verification artifacts
+build-out.log
+dev-out.log
+dev-err.log
+test-body.json

@@ -19,7 +19,12 @@ function readEnvFile(file) {
 
 const env = { ...readEnvFile(".env"), ...readEnvFile(".env.local") };
 const url = env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Accept either key naming (classic anon key or newer publishable key).
+const key =
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 console.log("supabase_url :", url ? `set (${url.replace(/^https:\/\/(.+)\.supabase\.co$/, "$1…")} — length ${url.length})` : "MISSING");
 console.log("anon_key     :", key ? `set (${key.length} chars)` : "MISSING");

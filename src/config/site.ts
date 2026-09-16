@@ -11,25 +11,25 @@ export interface SocialLink {
 
 export const siteConfig = {
   /** Full site/meeting title (browser tabs, PWA manifest name). */
-  name: "E3dady Youth Meeting",
+  name: "Thanwy Youth Meeting",
   /** Short name (installed-app title, admin pages). */
-  shortName: "E3dady",
+  shortName: "Thanwy",
   /** Site description (SEO metadata + PWA manifest). */
   description: {
-    en: "E3dady Youth Meeting – Christ Church Ezbet El Nakhl",
-    ar: "اجتماع شباب إعدادي · كنيسة المسيح – عزبة النخل",
+    en: "Thanwy Youth Meeting – Christ Church",
+    ar: "اجتماع شباب ثانوي · كنيسة المسيح",
   },
   /**
    * Public site URL — base for push-notification click-through links.
    * Override with NEXT_PUBLIC_SITE_URL (set it in production so notification
    * links always point at the deployed site, not the local dev server).
    */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://e3dady-ccen.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thanwy.ccen",
 
   /** The church this meeting belongs to. */
   church: {
-    name: "Christ Church – Ezbet El Nakhl",
-    nameAr: "كنيسة المسيح – عزبة النخل",
+    name: "Christ Church",
+    nameAr: "كنيسة المسيح",
   },
 
   /**
@@ -43,17 +43,14 @@ export const siteConfig = {
 
   /** Social links (rendered on the home hero and the contact page). */
   social: [
-    { name: "Facebook", url: "https://www.facebook.com/e3dady.ccen" },
-    { name: "Instagram", url: "https://www.instagram.com/e3dady.ccen" },
-    { name: "TikTok", url: "https://www.tiktok.com/@e3dady.ccen" },
-    { name: "YouTube", url: "https://www.youtube.com/@e3dady_ccen" },
-    { name: "Linktree", url: "https://linktr.ee/e3dady.ccen" },
+    { name: "Facebook", url: "https://www.facebook.com/thanwy.ccen" },
+    { name: "Instagram", url: "https://www.instagram.com/thanwy.ccen" },
   ] satisfies SocialLink[],
 
   /** Branding assets under /public — replace these files for a new meeting. */
   assets: {
     /** Round logo shown on the home hero and about page. */
-    logo: "/logo.png",
+    logo: "/thanwy-logo.png",
     /** App/PWA icon (also used as notification icon). */
     appIcon: "/app-icon.png",
   },
@@ -63,11 +60,11 @@ export const siteConfig = {
    * `<meetingFolder>/events` (special-events JSON) and
    * `<meetingFolder>/verse_of_week` (verse JSON). Gallery event folders and
    * the `invitations` folder live outside it in the same cloud account.
-   * Override with CLOUDINARY_MEETING_FOLDER for a new meeting (so a fresh
-   * meeting can reuse the same cloud without touching E3dady's data).
+   * Override with CLOUDINARY_MEETING_FOLDER so each meeting keeps its own
+   * namespace and never reads or writes another meeting's data.
    */
   cloudinary: {
-    meetingFolder: process.env.CLOUDINARY_MEETING_FOLDER ?? "e3dady_events",
+    meetingFolder: process.env.CLOUDINARY_MEETING_FOLDER ?? "thanwy_events",
   },
 };
 

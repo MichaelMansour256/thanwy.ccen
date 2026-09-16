@@ -4,9 +4,10 @@ This repository is a **reusable template for church meeting websites**. The code
 defines *how the website works*; the configuration under `src/config/` defines
 *which meeting the website represents*.
 
-The E3dady Youth Meeting site is the **reference implementation** — all default
-config values are its live values. Creating a new meeting website means
-changing configuration + assets, not rewriting components.
+The Thanwy Youth Meeting site (this repository) is a **live instance** of the
+template — all default config values are its live values. Creating a new
+meeting website means changing configuration + assets, not rewriting
+components.
 
 ---
 
@@ -44,7 +45,8 @@ changing configuration + assets, not rewriting components.
 | `src/config/features.ts` | Feature flags for major optional sections (events, bible, games, gallery, prayer wall, servants, about, contact, notifications) |
 | `src/config/index.ts` | Barrel — everything is imported from `@/config` |
 | `messages/ar.json`, `messages/en.json` | Generic UI labels (nav items, section titles) in both languages |
-| `public/` | Meeting-specific assets: `logo.png`, `app-icon.png`, `appstore-images/` (PWA icons + splash), `servants images/` |
+| `public/` | Meeting-specific assets: `thanwy-logo.png`, `app-icon.png`, `appstore-images/` (PWA icons + splash), `servants images/` |
+| `src/app/manifest.ts`, `src/app/sitemap.ts`, `src/app/robots.ts` | PWA manifest + SEO files, generated from the config above |
 | `.env.local` | Environment-specific: Supabase, Cloudinary, OneSignal, admin password, cron secret (see `.env.example`) |
 
 ---
@@ -105,6 +107,8 @@ in `src/app/globals.css`.
 
 Replace the servants array (name + Arabic name) and drop the photos into
 `public/servants images/` (or rename the folder and update `SERVANTS_DIR`).
+Until entries exist the servants page renders a bilingual "coming soon" empty
+state, so the section can ship before the data does.
 
 ### 6. Update navigation & features (optional)
 
@@ -117,11 +121,16 @@ Replace the servants array (name + Arabic name) and drop the photos into
 
 | Asset | Used for |
 |---|---|
-| `public/logo.png` | Home hero + About page logo |
-| `public/app-icon.png` | PWA icon, favicon, notification icon |
-| `public/appstore-images/**` | PWA splash screens / platform icons (regenerate with a PWA asset tool) |
+| `public/thanwy-logo.png` | Home hero + About page logo (referenced by `siteConfig.assets.logo`) |
+| `public/app-icon.png` | PWA icon, favicon, notification icon (512×512, referenced by `siteConfig.assets.appIcon`) |
+| `public/appstore-images/**` | Platform icons, Windows tiles/splashes and iOS startup images (filenames + sizes must stay as-is) |
+| `public/appstore-images/ios/splash-<W>x<H>.png` | iPhone startup images — the exact sizes are linked from `src/app/[locale]/layout.tsx` |
 | `public/servants images/` | Servants photos |
 | `public/OneSignalSDKWorker.js`, `OneSignalSDKUpdaterWorker.js` | OneSignal service workers — keep as-is |
+
+Brand colors are **not** assets: replace the values in `src/config/theme.ts`
+(+ the `:root` fallbacks in `src/app/globals.css`) and the PWA/theme colors
+follow automatically.
 
 Update `messages/ar.json` / `messages/en.json` for generic UI labels
 (`nav`, `events`, `bible`, `games`, `more` namespaces). Meeting identity text
@@ -162,11 +171,11 @@ and admin routes touch these tables.
 gallery photos from any root folder except `invitations` and the meeting
 folder. Admin uploads photos into event folders it creates. For a shared
 cloud account, set `CLOUDINARY_MEETING_FOLDER` to a unique namespace for the
-new meeting so the E3dady data stays untouched.
+new meeting so the other meeting's data stays untouched.
 
 **OneSignal**: create a new web-push app, set its ID + REST API key in env,
 keep the two `OneSignalSDKWorker*.js` files in `public/` (v16 stubs at root
-scope). Nothing else in the notification stack is E3dady-specific.
+scope). Nothing else in the notification stack is meeting-specific.
 
 **Vercel crons** (`vercel.json`): review the schedules — they assume a
 Thursday-evening invitation reminder (`0 17 * * 4`) and a Sunday-morning
@@ -204,17 +213,33 @@ npm run dev     # http://localhost:3000
 | Admin dashboard | ✅ | `ADMIN_PASSWORD` env |
 | Bible verse of the week | ✅ (GetBible API) | admin-selected weekly verse data |
 
-## Intentionally E3dady-Specific Remainders
+## Instance-Specific Values (set to Thanwy's)
 
-- `package.json` name `e3dady.ccen` (project identifier).
-- Default `siteConfig.cloudinary.meetingFolder = "e3dady_events"` and the
-  default `siteConfig.url` (`https://e3dady-ccen.vercel.app`) — the live
-  E3dady values; override via `CLOUDINARY_MEETING_FOLDER` /
-  `NEXT_PUBLIC_SITE_URL`.
-- `public/` branding assets (logo, icon, splash screens, servants photos).
+Everything below is *configuration*, not code — copy the repo and change these
+to brand the new meeting:
+
+- `package.json` name `thanwy.ccen` (project identifier).
+- `siteConfig.cloudinary.meetingFolder` default `"thanwy_events"` and the
+  default `siteConfig.url` (`https://thanwy.ccen`) — override via
+  `CLOUDINARY_MEETING_FOLDER` / `NEXT_PUBLIC_SITE_URL`. **Never** point a new
+  meeting at another meeting's folder namespace.
+- `public/` branding assets (`thanwy-logo.png`, `app-icon.png`,
+  `appstore-images/**`, servants photos).
+- `siteConfig.social` links and `meetingConfig.schedule` — verify the meeting
+  day/time before launch (`meeting.ts` carries a TODO note).
 - The **Verse Up Arena** game embed (`src/app/[locale]/games/page.tsx` →
   `verse-up-arena.vercel.app`) is an external product tied to this ecosystem —
   change the URL/logo in the games page for a different game platform.
-- Supabase data itself (existing prayer requests / notification history).
-- Repository URL references in the README (deployment/E3dady history).
+- Supabase data itself (prayer requests / notification history) — use a fresh
+  project per meeting so moderation queues stay separate.
+- Repository URL references in the README (deployment history).
+
+## Known TODOs For This Meeting
+
+- `src/config/meeting.ts` → confirm the weekly `schedule` (weekday + time) and
+  the reminder labels.
+- `src/config/servants.ts` → add the meeting's servants + photos (the array is
+  intentionally empty; the page shows a bilingual empty state until then).
+- `.env.local` → Supabase / Cloudinary / OneSignal / admin password / cron
+  secret / `NEXT_PUBLIC_SITE_URL`.
 

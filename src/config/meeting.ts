@@ -7,29 +7,29 @@
  */
 export const meetingConfig = {
   /** Meeting name (Arabic). */
-  name: "اجتماع شباب إعدادي",
+  name: "اجتماع شباب ثانوي",
   /** Meeting name (English). */
-  nameEn: "E3dady Youth Meeting",
+  nameEn: "Thanwy Youth Meeting",
   /** Short display name (installed PWA title, admin pages). */
-  shortName: "E3dady",
+  shortName: "Thanwy",
   /** Age group / stage the meeting serves. */
-  ageGroup: "إعدادي (Preparatory)",
+  ageGroup: "ثانوي (Secondary)",
 
   /** One-line tagline (used on the contact page). */
   tagline: {
-    ar: "إجتماع شباب إعدادي",
-    en: "E3dady Youth Meeting",
+    ar: "إجتماع شباب ثانوي",
+    en: "Thanwy Youth Meeting",
   },
 
   /** Home page hero texts. */
   hero: {
     welcome: {
-      ar: "أهلاً بيكم في اجتماع إعدادي",
-      en: "e3dady ccen",
+      ar: "أهلاً بيكم في اجتماع ثانوي",
+      en: "Welcome to Thanwy Meeting",
     },
     subtitle: {
-      ar: "اجتماع شباب إعدادي · كنيسة المسيح – عزبة النخل",
-      en: "E3dady Youth Meeting · Christ Church – Ezbet El Nakhl",
+      ar: "اجتماع شباب ثانوي · كنيسة المسيح",
+      en: "Thanwy Youth Meeting · Christ Church",
     },
   },
 
@@ -39,6 +39,9 @@ export const meetingConfig = {
    * invitation lookups (0 = Sunday … 6 = Saturday). `time` is HH:MM 24h and
    * feeds the countdown target and the admin event form default.
    * The `label*` fields are the exact strings shown in the UI / notifications.
+   *
+   * ⚠️ TODO(Thanwy): confirm this meeting's day/time. The values below are the
+   * template defaults (Friday 12:30 PM) and must be verified with the servants.
    */
   schedule: {
     weekday: 5, // Friday
@@ -55,8 +58,8 @@ export const meetingConfig = {
 
   /** Meeting location (the church itself lives in `siteConfig.church`). */
   location: {
-    name: "كنيسة المسيح – عزبة النخل",
-    nameEn: "Christ Church – Ezbet El Nakhl",
+    name: "كنيسة المسيح",
+    nameEn: "Christ Church",
   },
 
   /** "About" page content. */
@@ -64,11 +67,11 @@ export const meetingConfig = {
     title: { ar: "من نحن", en: "About Us" },
     paragraphs: {
       ar: [
-        "إحنا اجتماع إعدادي في كنيسة المسيح – عزبة النخل، بنجتمع علشان نكبر مع بعض في علاقتنا بربنا، نفهم كلمته أكتر، ونعيش إيماننا بشكل حقيقي في حياتنا اليومية.",
-        "بالنسبالنا الاجتماع مش مجرد وقت بنقضيه كل أسبوع، لكنه مكان بنقابل فيه ربنا، وبنكوّن صداقات حقيقية، ونتعلم، ونخوض تجارب جديدة مع بعض.",
+        "إحنا اجتماع شباب ثانوي في كنيسة المسيح، بنجتمع مع بعض كل أسبوع علشان نكبر في علاقتنا بربنا، نفهم كلمته أكتر، ونعيش إيماننا بشكل حقيقي في حياتنا اليومية.",
+        "بالنسبة لنا الاجتماع مش مجرد وقت بنقضيه، لكنه مكان بنقابل فيه ربنا، وبنكوّن صداقات حقيقية، ونتعلم، ونخوض تجارب جديدة مع بعض.",
       ],
       en: [
-        "We are a youth meeting at Christ Church – Ezbet El Nakhl. We gather to grow together in our relationship with God, understand His word more deeply, and live out our faith in our everyday lives.",
+        "We are a youth meeting at Christ Church. We gather together every week to grow in our relationship with God, understand His word more deeply, and live out our faith in our everyday lives.",
         "For us, this meeting is not just time we spend every week — it's a place where we encounter God, build real friendships, learn, and experience new things together.",
       ],
     },

@@ -32,7 +32,7 @@ export default function GamesPage() {
 
       <div className="flex flex-col items-center px-6 pt-8">
         <button onClick={() => setOpen(true)}
-          className="w-full max-w-sm rounded-3xl border border-yellow-400/30 bg-blue-primary/40 p-6 text-center backdrop-blur-sm transition hover:bg-blue-mid/50 active:scale-95 shadow-xl shadow-yellow-400/10">
+          className="w-full max-w-sm rounded-3xl border border-blue-accent/30 bg-blue-primary/40 p-6 text-center backdrop-blur-sm transition hover:bg-blue-mid/50 active:scale-95 shadow-xl shadow-blue-accent/10">
           <div className="relative mx-auto mb-4 h-48 w-48">
             <Image src="/verse-up-logo.png" alt="Verse Up Arena" fill className="object-contain drop-shadow-2xl" />
           </div>
@@ -40,7 +40,7 @@ export default function GamesPage() {
           <p className="mt-1 text-sm text-blue-light/60">
             {isAr ? "تحدي آيات الكتاب المقدس" : "Bible verse challenge game"}
           </p>
-          <span className="mt-4 inline-block rounded-full bg-yellow-400 px-6 py-2 text-sm font-bold text-blue-dark">
+          <span className="mt-4 inline-block rounded-full bg-blue-accent px-6 py-2 text-sm font-bold text-white">
             {isAr ? "العب الآن ▶" : "Play Now ▶"}
           </span>
         </button>

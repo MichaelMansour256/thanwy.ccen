@@ -1,18 +1,24 @@
 import PageHeader from "@/components/PageHeader";
 import SocialLinks from "@/components/SocialLinks";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { meetingConfig, siteConfig } from "@/config";
 
 export default function ContactPage() {
+  const isAr = useLocale() === "ar";
+  const tMore = useTranslations("more");
+
   return (
     <div className="min-h-dvh page-gradient">
-      <PageHeader title="Contact" icon="📬" />
+      <PageHeader title={tMore("contact")} icon="📬" />
 
       <div className="flex flex-col items-center gap-6 px-6 pt-8 text-center">
         {/* Church info */}
         <div className="w-full max-w-sm rounded-2xl border border-blue-mid/40 bg-blue-primary/30 p-6 backdrop-blur-sm">
           <p className="text-base font-semibold text-white">{siteConfig.church.name}</p>
-          <p className="mt-1 text-sm text-blue-light/70">{meetingConfig.tagline.ar}</p>
+          <p className="mt-1 text-sm text-blue-light/70">
+            {isAr ? meetingConfig.tagline.ar : meetingConfig.tagline.en}
+          </p>
         </div>
 
         {/* Social links */}

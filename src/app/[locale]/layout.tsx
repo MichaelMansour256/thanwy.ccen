@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -9,6 +10,37 @@ import { Cairo, Inter } from "next/font/google";
 
 const cairo = Cairo({ subsets: ["arabic"], weight: ["400", "600", "700"], variable: "--font-cairo", display: "swap" });
 const inter = Inter({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--font-inter", display: "swap" });
+
+/** Locale-aware title/description + canonical/hreflang pairs. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isAr = locale === "ar";
+  const description = isAr ? siteConfig.description.ar : siteConfig.description.en;
+
+  return {
+    title: siteConfig.name,
+    description,
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        ar: "/ar",
+        en: "/en",
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName: siteConfig.name,
+      title: siteConfig.name,
+      description,
+      url: `/${locale}`,
+      locale: isAr ? "ar_EG" : "en_US",
+    },
+  };
+}
 
 export default async function LocaleLayout({
   children,
@@ -37,13 +69,14 @@ export default async function LocaleLayout({
         <link rel="apple-touch-icon" sizes="167x167" href={siteConfig.assets.appIcon} />
         <link rel="apple-touch-icon" sizes="152x152" href={siteConfig.assets.appIcon} />
         <link rel="apple-touch-icon" sizes="120x120" href={siteConfig.assets.appIcon} />
-        {/* Apple splash screens */}
-        <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/windows/SplashScreen.scale-400.png" />
-        <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/windows/SplashScreen.scale-400.png" />
-        <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/windows/SplashScreen.scale-200.png" />
-        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/windows/SplashScreen.scale-200.png" />
-        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/appstore-images/windows/SplashScreen.scale-150.png" />
-        <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="/appstore-images/windows/SplashScreen.scale-200.png" />
+        {/* Apple splash screens — portrait images sized to each device's
+            CSS viewport × device-pixel-ratio (see public/appstore-images/ios). */}
+        <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/ios/splash-1290x2796.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/ios/splash-1179x2556.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/ios/splash-1170x2532.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/appstore-images/ios/splash-1125x2436.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/appstore-images/ios/splash-750x1334.png" />
+        <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="/appstore-images/ios/splash-828x1792.png" />
       </head>
       <body>
         {/* Live theme values from src/config/theme.ts (overrides the

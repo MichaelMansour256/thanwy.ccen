@@ -59,8 +59,8 @@ export default function VerseOfWeekPage() {
 
             {/* Servant note */}
             {verse.note && (
-              <div className="w-full rounded-2xl border border-yellow-400/20 bg-yellow-400/5 p-4" dir="rtl">
-                <p className="text-xs font-semibold text-yellow-400 mb-1">💬 ملاحظة</p>
+              <div className="w-full rounded-2xl border border-blue-accent/20 bg-blue-accent/5 p-4" dir="rtl">
+                <p className="text-xs font-semibold text-blue-accent mb-1">💬 ملاحظة</p>
                 <p className="text-sm leading-relaxed text-white/80">{verse.note}</p>
               </div>
             )}

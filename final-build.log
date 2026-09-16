@@ -1,21 +1,21 @@
 
-> e3dady.ccen@0.1.0 build
+> thanwy.ccen@0.1.0 build
 > next build
 
 ▲ Next.js 16.3.4 (Turbopack)
 - Environments: .env.local
-✓ Running next.config.ts took 18.8s
+✓ Running next.config.ts took 1829ms
 
   Creating an optimized production build ...
-✓ Compiled successfully in 46s
+✓ Compiled successfully in 3.2s
   Running TypeScript ...
-  Finished TypeScript in 11.4s ...
+  Finished TypeScript in 2.7s ...
   Collecting page data using 3 workers ...
-  Generating static pages using 3 workers (0/26) ...
-  Generating static pages using 3 workers (6/26) 
-  Generating static pages using 3 workers (12/26) 
-  Generating static pages using 3 workers (19/26) 
-✓ Generating static pages using 3 workers (26/26) in 4.6s
+  Generating static pages using 3 workers (0/28) ...
+  Generating static pages using 3 workers (7/28) 
+  Generating static pages using 3 workers (14/28) 
+  Generating static pages using 3 workers (21/28) 
+✓ Generating static pages using 3 workers (28/28) in 295ms
   Finalizing page optimization ...
 
 Route (app)
@@ -57,7 +57,9 @@ Route (app)
 ├ ƒ /api/prayer/pray
 ├ ƒ /api/test-notification
 ├ ƒ /api/verse
-└ ○ /manifest.webmanifest
+├ ○ /manifest.webmanifest
+├ ○ /robots.txt
+└ ○ /sitemap.xml
 
 
 ƒ Proxy (Middleware)

@@ -1,12 +1,12 @@
-# E3dady Youth Meeting
+# Thanwy Youth Meeting
 
 ### Faith • Friendship • Growth
 
-A modern, mobile-first Progressive Web App for the **E3dady Youth Meeting** at **Christ Church – Ezbet El Nakhl (كنيسة المسيح – عزبة النخل)**.
+A modern, mobile-first Progressive Web App for the **Thanwy Youth Meeting** at **Christ Church (كنيسة المسيح)**.
 
 The platform brings together weekly meeting information, Bible content, games, event photos, prayer requests, push notifications, and administrative tools in one centralized experience.
 
-**Live Website:** https://e3dady-ccen.vercel.app/
+**Live Website:** https://thanwy.ccen/
 
 ---
 
@@ -16,6 +16,10 @@ This repository doubles as a **template**: the code defines how the website
 works, while the configuration under **`src/config/`** defines which meeting
 it represents. A second meeting website can be created by editing
 configuration and replacing assets — no component rewrites required.
+
+This repository is the **Thanwy Youth Meeting** instance of that template, so
+every default config value (name, church, colors, assets, Cloudinary folder)
+is Thanwy's live value.
 
 ```text
 src/config/
@@ -43,7 +47,7 @@ Quick orientation:
 
 ## ✨ Overview
 
-**E3dady Youth Meeting** is designed as a digital hub for the youth meeting, providing members with an engaging and accessible way to stay connected with the meeting throughout the week.
+**Thanwy Youth Meeting** is designed as a digital hub for the youth meeting, providing members with an engaging and accessible way to stay connected with the meeting throughout the week.
 
 The application supports both **Arabic and English**, with a fully responsive **RTL/LTR interface** and a mobile-first design optimized for use as a Progressive Web App.
 
@@ -230,14 +234,29 @@ messages/
 
 ---
 
+## 🔎 SEO & Discoverability
+
+Metadata comes from `src/config` (site title, per-locale description,
+application name, Open Graph / Twitter cards, canonical URL + `hreflang`
+alternates for each locale).
+
+Generated automatically:
+
+- `/sitemap.xml` — every public page for every locale, gated by the feature
+  flags in `src/config/features.ts`
+- `/robots.txt` — allows the public site, disallows `/admin` and `/api/`
+- `/manifest.webmanifest` — PWA manifest with the brand theme colors and icons
+
+---
+
 ## 📱 Progressive Web App
 
-E3dady is built as a **Progressive Web App (PWA)**, allowing users to access the meeting platform like a native application.
+Thanwy is built as a **Progressive Web App (PWA)**, allowing users to access the meeting platform like a native application.
 
 The project includes:
 
-- Web App Manifest
-- PWA icons
+- Web App Manifest (generated from `src/config` at `/manifest.webmanifest`)
+- App icons + iOS startup (splash) images
 - Mobile-optimized layouts
 - Installable experience
 - Push notification support
@@ -268,7 +287,7 @@ The project dependencies include Next.js, React, TypeScript, Tailwind CSS, Supab
 ## 🏗️ Project Structure
 
 ```text
-e3dady.ccen/
+thanwy.ccen/
 │
 ├── src/
 │   ├── app/
@@ -306,16 +325,19 @@ e3dady.ccen/
 │   └── en.json
 │
 ├── public/
-│   ├── logo.png
+│   ├── thanwy-logo.png
+│   ├── app-icon.png
 │   ├── verse-up-logo.png
-│   ├── manifest.json
 │   ├── appstore-images/
-│   └── servants images/
+│   │   ├── android/
+│   │   ├── ios/          (icons + splash-<W>x<H>.png iPhone startup images)
+│   │   └── windows/
+│   └── servants images/  (empty until this meeting's photos are added)
 │
-├── scripts/
 ├── supabase-notifications-history.sql
 ├── next.config.ts
-├── tailwind.config.*
+├── eslint.config.mjs
+├── postcss.config.mjs
 ├── tsconfig.json
 ├── vercel.json
 └── package.json
@@ -342,8 +364,8 @@ Make sure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/MichaelMansour256/e3dady.ccen.git
-cd e3dady.ccen
+git clone https://github.com/MichaelMansour256/thanwy.ccen.git
+cd thanwy.ccen
 ```
 
 ---
@@ -471,7 +493,7 @@ To deploy successfully, make sure all required environment variables are configu
 
 The application is currently available at:
 
-https://e3dady-ccen.vercel.app/
+https://thanwy.ccen/
 
 ---
 
@@ -522,7 +544,7 @@ Providing resources, activities, games, and opportunities that encourage spiritu
 
 ## 🤝 Contributing
 
-This project is primarily developed for the E3dady Youth Meeting.
+This project is primarily developed for the Thanwy Youth Meeting.
 
 For significant changes:
 
@@ -538,7 +560,7 @@ Please avoid committing secrets, generated files, or production credentials.
 
 ## 📄 License
 
-This project is maintained for the E3dady Youth Meeting at Christ Church – Ezbet El Nakhl.
+This project is maintained for the Thanwy Youth Meeting at Christ Church.
 
 Unless otherwise specified, the source code and original assets are not intended for redistribution or commercial use without permission from the project maintainers.
 
@@ -563,9 +585,9 @@ This project makes use of several open-source and third-party services:
 
 ## 📬 Contact
 
-For questions, suggestions, or information about the E3dady Youth Meeting, use the contact and social links available on the website.
+For questions, suggestions, or information about the Thanwy Youth Meeting, use the contact and social links available on the website.
 
-**E3dady Youth Meeting**  
-Christ Church – Ezbet El Nakhl
+**Thanwy Youth Meeting**  
+Christ Church
 
 **Faith • Friendship • Growth**

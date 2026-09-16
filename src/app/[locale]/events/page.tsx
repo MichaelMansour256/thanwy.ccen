@@ -37,7 +37,7 @@ function DateStrip({ events, invitations, onInvitationTap }: {
         return (
           <button key={iso} onClick={() => invUrl && onInvitationTap(invUrl)}
             className={`flex shrink-0 flex-col items-center rounded-xl px-3 py-2 w-12 transition ${
-              invUrl ? "ring-2 ring-yellow-400/60" : ""
+              invUrl ? "ring-2 ring-blue-accent/60" : ""
             } ${
               isToday ? "bg-blue-accent text-white" :
               meetingDay ? "bg-blue-primary/60 text-white border border-blue-accent/40" :
@@ -46,8 +46,8 @@ function DateStrip({ events, invitations, onInvitationTap }: {
             <span className="text-xs">{d.toLocaleDateString("en", { weekday: "short" })}</span>
             <span className="text-base font-bold">{d.getDate()}</span>
             <span className={`mt-0.5 h-1.5 w-1.5 rounded-full ${
-              invUrl ? "bg-yellow-400" :
-              hasEvent ? "bg-yellow-400/60" :
+              invUrl ? "bg-blue-accent" :
+              hasEvent ? "bg-blue-light/70" :
               meetingDay ? "bg-blue-accent/60" :
               "opacity-0"
             }`} />
@@ -97,7 +97,7 @@ export default function EventsPage() {
       {/* Next Friday invitation banner */}
       {nextInvitation && (
         <button onClick={() => setFullscreenImg(nextInvitation.url)}
-          className="mx-4 mb-2 w-[calc(100%-2rem)] overflow-hidden rounded-2xl border border-yellow-400/30 shadow-lg shadow-yellow-400/10 active:scale-95 transition">
+          className="mx-4 mb-2 w-[calc(100%-2rem)] overflow-hidden rounded-2xl border border-blue-accent/30 shadow-lg shadow-blue-accent/10 active:scale-95 transition">
           <Image src={nextInvitation.url} alt="invitation" width={600} height={300}
             className="w-full object-cover max-h-48" />
         </button>
@@ -189,7 +189,7 @@ function EventCard({ event, isAr, invitation, onInvitationTap }: {
   });
 
   return (
-    <div className="rounded-2xl border border-yellow-400/30 bg-yellow-400/5 overflow-hidden backdrop-blur-sm">
+    <div className="rounded-2xl border border-blue-accent/30 bg-blue-accent/5 overflow-hidden backdrop-blur-sm">
       {invitation && (
         <button onClick={() => onInvitationTap(invitation.url)} className="w-full">
           <Image src={invitation.url} alt="invitation" width={600} height={200}

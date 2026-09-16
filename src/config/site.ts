@@ -9,6 +9,36 @@ export interface SocialLink {
   url: string;
 }
 
+/** Fallback used when NEXT_PUBLIC_SITE_URL is unset, empty or malformed. */
+const DEFAULT_SITE_URL = "https://thanwy.ccen";
+
+/**
+ * Resolve the public site URL from the environment.
+ *
+ * `??` is not enough here: a NEXT_PUBLIC_* variable that exists but holds an
+ * empty value (easy to leave behind in the Vercel UI) is inlined as "" at build
+ * time, and `new URL("")` throws while Next.js collects route data, failing the
+ * whole build with ERR_INVALID_URL. So an unset, empty and whitespace-only value
+ * all fall back to the default. A value without a scheme ("thanwy.ccen") is
+ * normalised too, and trailing slashes are stripped so it can be joined with
+ * paths (`${url}/sitemap.xml`).
+ */
+function resolveSiteUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim().replace(/\/+$/, "");
+  if (!value) return DEFAULT_SITE_URL;
+
+  try {
+    return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
+      .toString()
+      .replace(/\/+$/, "");
+  } catch {
+    console.warn(
+      `[site] Ignoring invalid NEXT_PUBLIC_SITE_URL: ${JSON.stringify(raw)}`
+    );
+    return DEFAULT_SITE_URL;
+  }
+}
+
 export const siteConfig = {
   /** Full site/meeting title (browser tabs, PWA manifest name). */
   name: "Thanwy Youth Meeting",
@@ -20,11 +50,13 @@ export const siteConfig = {
     ar: "اجتماع شباب ثانوي · كنيسة المسيح",
   },
   /**
-   * Public site URL — base for push-notification click-through links.
-   * Override with NEXT_PUBLIC_SITE_URL (set it in production so notification
-   * links always point at the deployed site, not the local dev server).
+   * Public site URL — base for push-notification click-through links, canonical
+   * metadata, robots.txt and the sitemap. Override with NEXT_PUBLIC_SITE_URL
+   * (set it in production so notification links always point at the deployed
+   * site, not the local dev server). Unset, empty or scheme-less values are
+   * normalised — see `resolveSiteUrl`.
    */
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://thanwy.ccen",
+  url: resolveSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
 
   /** The church this meeting belongs to. */
   church: {
@@ -61,10 +93,11 @@ export const siteConfig = {
    * `<meetingFolder>/verse_of_week` (verse JSON). Gallery event folders and
    * the `invitations` folder live outside it in the same cloud account.
    * Override with CLOUDINARY_MEETING_FOLDER so each meeting keeps its own
-   * namespace and never reads or writes another meeting's data.
+   * namespace and never reads or writes another meeting's data (a blank value
+   * falls back to the default below).
    */
   cloudinary: {
-    meetingFolder: process.env.CLOUDINARY_MEETING_FOLDER ?? "thanwy_events",
+    meetingFolder: process.env.CLOUDINARY_MEETING_FOLDER?.trim() || "thanwy_events",
   },
 };
 

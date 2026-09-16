@@ -78,7 +78,24 @@ export async function getNotificationHistory(): Promise<NotificationRecord[]> {
     return [];
   }
 
-  return (data || []).map((row: any) => ({
+  // Row shape of notifications_history (snake_case columns).
+  type NotificationRow = {
+    id: string;
+    sent_at: string;
+    heading_ar: string;
+    heading_en: string;
+    message_ar: string;
+    message_en: string;
+    url: string;
+    image: string | null;
+    onesignal_id: string | null;
+    status: string;
+    recipients: number | null;
+    created_at: string;
+    error: string | null;
+  };
+
+  return (data || []).map((row: NotificationRow) => ({
     id: row.id,
     sentAt: row.sent_at,
     headingAr: row.heading_ar,
@@ -91,7 +108,7 @@ export async function getNotificationHistory(): Promise<NotificationRecord[]> {
     status: row.status,
     recipients: row.recipients,
     createdAt: row.created_at,
-    error: row.error,
+    error: row.error ?? undefined,
   }));
 }
 
@@ -112,7 +129,11 @@ export async function getNotificationById(
     .eq("id", id)
     .single();
 
-  if (error || !data) {
+  if (error) {
+    console.error("Failed to fetch notification record from Supabase:", { code: error.code, message: error.message });
+    return null;
+  }
+  if (!data) {
     return null;
   }
 

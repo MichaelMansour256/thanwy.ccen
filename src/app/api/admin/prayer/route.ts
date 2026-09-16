@@ -11,7 +11,10 @@ export async function GET(req: Request) {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Supabase GET prayer_requests (admin) failed:", { code: error.code, message: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json(data);
 }
 
@@ -29,7 +32,10 @@ export async function PATCH(req: Request) {
     .update({ status })
     .eq("id", id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Supabase UPDATE prayer_requests (admin approve/reject) failed:", { code: error.code, message: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ success: true });
 }
 
@@ -41,6 +47,9 @@ export async function DELETE(req: Request) {
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const { error } = await getSupabase().from("prayer_requests").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Supabase DELETE prayer_requests (admin) failed:", { code: error.code, message: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ success: true });
 }

@@ -15,46 +15,70 @@ export default function PrayerWallPage() {
   const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [prayedIds, setPrayedIds] = useState<Set<string>>(new Set());
+  const [submitError, setSubmitError] = useState("");
+  const [prayedIds, setPrayedIds] = useState<Set<string>>(() => {
+    // Lazy initializer (SSR-safe): reading localStorage during render avoids
+    // calling setState inside the effect below.
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = localStorage.getItem("prayedIds");
+      return stored ? new Set<string>(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
 
   useEffect(() => {
     fetch("/api/prayer")
       .then((r) => r.json())
       .then((data) => { setPrayers(Array.isArray(data) ? data : []); setLoading(false); });
-    // Load prayed ids from localStorage
-    const stored = localStorage.getItem("prayedIds");
-    if (stored) setPrayedIds(new Set(JSON.parse(stored)));
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!request.trim()) return;
     setSubmitting(true);
-    await fetch("/api/prayer", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, request }),
-    });
-    setSubmitting(false);
-    setSubmitted(true);
-    setName("");
-    setRequest("");
+    setSubmitError("");
+    try {
+      const res = await fetch("/api/prayer", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, request }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // A failed insert must never look like a successful submission.
+        setSubmitError(
+          res.status === 503
+            ? isAr ? "الخدمة غير متاحة حالياً — حاول لاحقاً" : "Service temporarily unavailable — please try again later"
+            : data.error ?? (isAr ? "حدث خطأ — حاول مرة أخرى" : "Something went wrong — please try again")
+        );
+        return;
+      }
+      setSubmitted(true);
+      setName("");
+      setRequest("");
+    } catch {
+      setSubmitError(isAr ? "خطأ في الاتصال — حاول مرة أخرى" : "Network error — please try again");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handlePray(id: string) {
     if (prayedIds.has(id)) return;
-    const newIds = new Set(prayedIds).add(id);
-    setPrayedIds(newIds);
-    localStorage.setItem("prayedIds", JSON.stringify([...newIds]));
     const res = await fetch("/api/prayer/pray", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    const data = await res.json();
-    if (data.pray_count !== undefined) {
-      setPrayers((prev) => prev.map((p) => p.id === id ? { ...p, pray_count: data.pray_count } : p));
-    }
+    const data = await res.json().catch(() => ({}));
+    // Only count and remember the prayer after the database confirms it.
+    if (!res.ok || data.pray_count === undefined) return;
+    const newIds = new Set(prayedIds).add(id);
+    setPrayedIds(newIds);
+    localStorage.setItem("prayedIds", JSON.stringify([...newIds]));
+    setPrayers((prev) => prev.map((p) => p.id === id ? { ...p, pray_count: data.pray_count } : p));
   }
 
   return (
@@ -92,6 +116,9 @@ export default function PrayerWallPage() {
                 rows={3}
                 className="w-full rounded-xl bg-blue-dark/60 px-4 py-2 text-white placeholder-blue-light/40 outline-none ring-1 ring-blue-mid/40 focus:ring-blue-accent text-sm resize-none"
               />
+              {submitError && (
+                <p className="text-sm text-red-400">{submitError}</p>
+              )}
               <button type="submit" disabled={submitting || !request.trim()}
                 className="rounded-xl bg-blue-accent py-2 text-sm font-semibold text-white hover:bg-blue-mid disabled:opacity-50 transition">
                 {submitting ? "…" : isAr ? "أرسل الطلب 🙏" : "Send Request 🙏"}

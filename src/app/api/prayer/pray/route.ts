@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export async function POST(req: Request) {
-  const { id } = await req.json();
+  let body: { id?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { id } = body;
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   if (!isSupabaseConfigured()) {
@@ -17,7 +23,14 @@ export async function POST(req: Request) {
     .eq("status", "approved")
     .single();
 
-  if (fetchError || !data) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (fetchError || !data) {
+    // PGRST116 = no rows matched (unknown id). Anything else is a real failure.
+    if (fetchError && fetchError.code !== "PGRST116") {
+      console.error("Supabase SELECT prayer_requests (pray) failed:", { code: fetchError.code, message: fetchError.message });
+      return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    }
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const { error } = await getSupabase()
     .from("prayer_requests")
@@ -25,6 +38,9 @@ export async function POST(req: Request) {
     .eq("id", id)
     .eq("status", "approved");
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error("Supabase UPDATE prayer_requests (pray) failed:", { code: error.code, message: error.message });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   return NextResponse.json({ pray_count: data.pray_count + 1 });
 }

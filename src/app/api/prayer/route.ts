@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export async function GET() {
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
+  }
+
+  const { data, error } = await getSupabase()
     .from("prayer_requests")
     .select("id, name, request, pray_count, created_at")
     .eq("status", "approved")
@@ -16,7 +20,11 @@ export async function POST(req: Request) {
   const { name, request } = await req.json();
   if (!request?.trim()) return NextResponse.json({ error: "Request is required" }, { status: 400 });
 
-  const { error } = await supabase.from("prayer_requests").insert({
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ error: "Supabase is not configured" }, { status: 503 });
+  }
+
+  const { error } = await getSupabase().from("prayer_requests").insert({
     name: name?.trim() || "مجهول",
     request: request.trim(),
     status: "pending",

@@ -491,6 +491,14 @@ To deploy successfully, make sure all required environment variables are configu
 
 **Vercel → Project Settings → Environment Variables**
 
+> **Note:** `NEXT_PUBLIC_*` variables are inlined into the bundle at build time,
+> so they must exist in the **Production** scope before the build runs. When one
+> of them is missing, the failure appears during the build (for example
+> `supabaseUrl is required.`) rather than at runtime. Supabase is therefore
+> created lazily in `src/lib/supabase.ts`: the build succeeds even without it,
+> and the prayer wall / notification history answer `503 Supabase is not
+> configured` until the variables are set.
+
 The application is currently available at:
 
 https://thanwy.ccen/

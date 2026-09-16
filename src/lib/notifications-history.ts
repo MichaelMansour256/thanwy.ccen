@@ -2,7 +2,7 @@
 // Replaces the previous file-based storage (public/notifications-history.json)
 // which doesn't work on Vercel/serverless (read-only filesystem)
 
-import { supabase } from "./supabase";
+import { getSupabase, isSupabaseConfigured } from "./supabase";
 
 export interface NotificationRecord {
   id: string;
@@ -26,7 +26,12 @@ export interface NotificationRecord {
 export async function putNotificationRecord(
   record: Omit<NotificationRecord, "createdAt">
 ): Promise<void> {
-  const { error } = await supabase
+  if (!isSupabaseConfigured()) {
+    console.error("Supabase is not configured — notification record not saved.");
+    return;
+  }
+
+  const { error } = await getSupabase()
     .from("notifications_history")
     .insert({
       id: record.id,
@@ -57,7 +62,12 @@ export async function putNotificationRecord(
  * Get all notification records, newest first.
  */
 export async function getNotificationHistory(): Promise<NotificationRecord[]> {
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured()) {
+    console.error("Supabase is not configured — notification history is empty.");
+    return [];
+  }
+
+  const { data, error } = await getSupabase()
     .from("notifications_history")
     .select("*")
     .order("sent_at", { ascending: false })
@@ -91,7 +101,12 @@ export async function getNotificationHistory(): Promise<NotificationRecord[]> {
 export async function getNotificationById(
   id: string
 ): Promise<NotificationRecord | null> {
-  const { data, error } = await supabase
+  if (!isSupabaseConfigured()) {
+    console.error("Supabase is not configured — notification lookup skipped.");
+    return null;
+  }
+
+  const { data, error } = await getSupabase()
     .from("notifications_history")
     .select("*")
     .eq("id", id)

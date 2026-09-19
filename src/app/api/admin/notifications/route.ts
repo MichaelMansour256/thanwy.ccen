@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthorized } from "@/lib/auth";
-import { getNotificationHistory, getNotificationById } from "@/lib/notifications-history";
+import { getNotificationHistory } from "@/lib/notifications-history";
 
 export async function GET(req: Request) {
   if (!isAuthorized(req)) {
@@ -8,8 +8,8 @@ export async function GET(req: Request) {
   }
 
   // Try to get history from Supabase first
-  let history = await getNotificationHistory();
-  
+  const { records: history, error: historyError } = await getNotificationHistory();
+
   if (history.length > 0) {
     return NextResponse.json({
       notifications: history.map((n) => ({
@@ -27,6 +27,18 @@ export async function GET(req: Request) {
         sentAt: n.sentAt,
       })),
       source: "supabase",
+    });
+  }
+
+  // Empty history. If the Supabase read itself failed (missing table, RLS
+  // denial, network) say so instead of silently falling through to the
+  // OneSignal list, which would look like a healthy history.
+  if (historyError) {
+    console.error("Notification history read failed:", historyError);
+    return NextResponse.json({
+      notifications: [],
+      source: "supabase-error",
+      warning: `Notification history could not be read from Supabase: ${historyError}`,
     });
   }
 

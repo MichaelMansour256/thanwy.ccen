@@ -10,16 +10,21 @@ import { useEffect, useState } from "react";
  * States:
  *  - unsupported: no Notification API (old browser / in-app webview)
  *  - blocked:    permission denied — must be fixed in browser settings
+ *  - error:      OneSignal SDK `init()` failed (e.g. the OneSignal app has no
+ *                Web platform / Site URL configured) — nothing can subscribe
+ *                until that is fixed in the OneSignal dashboard, so we say so
+ *                instead of offering a button that can never work
  *  - on:         subscribed (has a OneSignal subscription id)
  *  - off:        permission default or granted-but-no-subscription → tap to fix
  */
-type BellState = "loading" | "unsupported" | "blocked" | "on" | "off";
+type BellState = "loading" | "unsupported" | "blocked" | "error" | "on" | "off";
 
 export default function PushBell({ locale }: { locale: string }) {
   const isAr = locale === "ar";
   const [state, setState] = useState<BellState>("loading");
   const [busy, setBusy] = useState(false);
   const [subId, setSubId] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
   async function refresh() {
     if (typeof Notification === "undefined") {
@@ -28,6 +33,14 @@ export default function PushBell({ locale }: { locale: string }) {
     }
     if (Notification.permission === "denied") {
       setState("blocked");
+      return;
+    }
+    // SDK init failed (bad/missing OneSignal app config) — no amount of
+    // tapping can create a subscription, so surface the reason.
+    const sdkError = window.__oneSignalInitError;
+    if (sdkError) {
+      setInitError(sdkError);
+      setState("error");
       return;
     }
     // NOTE: v16 page SDK exposes OneSignal ONLY inside OneSignalDeferred.push(cb).
@@ -137,6 +150,29 @@ export default function PushBell({ locale }: { locale: string }) {
               ? "افتح ⚙️ إعدادات المتصفح ← الإشعارات ← سماح، ثم ارجع هنا"
               : "Open browser settings → Notifications → Allow, then come back"}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (state === "error") {
+    return (
+      <div className={`${box} border-red-400/40`}>
+        <span className="text-2xl">⚠️</span>
+        <div>
+          <p className="text-base font-semibold text-white">
+            {isAr ? "تعذّر تفعيل الإشعارات" : "Notifications unavailable"}
+          </p>
+          <p className="text-xs text-blue-light/60">
+            {isAr
+              ? "إعداد تطبيق OneSignal ناقص (رابط الموقع / منصّة الويب). راجع لوحة تحكم OneSignal."
+              : "The OneSignal app is not fully configured (Web platform / Site URL). Fix it in the OneSignal dashboard."}
+          </p>
+          {initError && (
+            <p className="mt-1 font-mono text-[10px] leading-relaxed text-red-300/80">
+              {initError}
+            </p>
+          )}
         </div>
       </div>
     );

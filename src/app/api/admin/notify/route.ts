@@ -58,25 +58,51 @@ export async function POST(req: Request) {
       ...(image ? { image } : {}),
     });
 
-    // Save to notification history
-    await putNotificationRecord({
-      id: notifyId,
-      sentAt,
-      headingAr,
-      headingEn,
-      messageAr,
-      messageEn,
-      url: urlValue,
-      image: imageValue,
-      onesignalId: result.id || null,
-      status: "sent",
-      recipients: null, // OneSignal create response doesn't include count
-    });
+    // OneSignal returns the number of recipients it queued for when it can
+    // resolve them; keep it when present so the history row shows a real
+    // target count instead of always null.
+    const recipients =
+      typeof result?.recipients === "number" ? result.recipients : null;
+
+    // Save to notification history. A history-write failure must NOT be
+    // reported as a send failure — OneSignal has already accepted the push at
+    // this point, so the admin would otherwise retry and send a duplicate.
+    let historySaved = true;
+    let historyError: string | undefined;
+    try {
+      await putNotificationRecord({
+        id: notifyId,
+        sentAt,
+        headingAr,
+        headingEn,
+        messageAr,
+        messageEn,
+        url: urlValue,
+        image: imageValue,
+        onesignalId: result.id || null,
+        status: "sent",
+        recipients,
+      });
+    } catch (historyErr) {
+      historySaved = false;
+      historyError =
+        historyErr instanceof Error ? historyErr.message : String(historyErr);
+      console.error(
+        "Notification sent but saving it to Supabase history failed:",
+        historyError
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Notification sent successfully",
+      message: historySaved
+        ? "Notification sent successfully"
+        : "Notification sent, but it could not be saved to the notification history",
       notificationId: notifyId,
+      id: result.id || null,
+      recipients,
+      historySaved,
+      ...(historyError ? { historyError } : {}),
     });
   } catch (error) {
     // Properly stringify the error regardless of type
@@ -111,7 +137,10 @@ export async function POST(req: Request) {
           success: false,
           message:
             "No subscribed devices are currently available. " +
-            "Users may have unsubscribed, blocked push, or not yet subscribed.",
+            "Users may have unsubscribed, blocked push, or not yet subscribed. " +
+            "If no device has ever registered, check /api/admin/notify-status — " +
+            "a OneSignal app without a Web platform / Site URL can never create " +
+            "subscriptions (the browser SDK fails with \"App not configured for web push\").",
         },
         { status: 200 }
       );

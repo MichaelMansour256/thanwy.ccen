@@ -60,11 +60,24 @@ export async function putNotificationRecord(
 
 /**
  * Get all notification records, newest first.
+ *
+ * Returns the failure reason instead of only an empty array: an empty
+ * `records` list is otherwise indistinguishable from "the table is missing /
+ * RLS denied the read / the network failed", and the admin UI would show an
+ * empty history (or silently fall back to a different data source) with no
+ * hint that something is broken.
  */
-export async function getNotificationHistory(): Promise<NotificationRecord[]> {
+export interface NotificationHistoryResult {
+  records: NotificationRecord[];
+  error?: string;
+}
+
+export async function getNotificationHistory(): Promise<NotificationHistoryResult> {
   if (!isSupabaseConfigured()) {
-    console.error("Supabase is not configured — notification history is empty.");
-    return [];
+    const message =
+      "Supabase is not configured — notification history is unavailable.";
+    console.error(message);
+    return { records: [], error: message };
   }
 
   const { data, error } = await getSupabase()
@@ -75,7 +88,12 @@ export async function getNotificationHistory(): Promise<NotificationRecord[]> {
 
   if (error) {
     console.error("Failed to fetch notification history from Supabase:", error);
-    return [];
+    // 42P01 = table does not exist, 42501 = RLS denied. Both used to look
+    // like "no notifications sent yet".
+    return {
+      records: [],
+      error: `${error.code ? `[${error.code}] ` : ""}${error.message}`,
+    };
   }
 
   // Row shape of notifications_history (snake_case columns).
@@ -95,21 +113,23 @@ export async function getNotificationHistory(): Promise<NotificationRecord[]> {
     error: string | null;
   };
 
-  return (data || []).map((row: NotificationRow) => ({
-    id: row.id,
-    sentAt: row.sent_at,
-    headingAr: row.heading_ar,
-    headingEn: row.heading_en,
-    messageAr: row.message_ar,
-    messageEn: row.message_en,
-    url: row.url,
-    image: row.image,
-    onesignalId: row.onesignal_id,
-    status: row.status,
-    recipients: row.recipients,
-    createdAt: row.created_at,
-    error: row.error ?? undefined,
-  }));
+  return {
+    records: (data || []).map((row: NotificationRow) => ({
+      id: row.id,
+      sentAt: row.sent_at,
+      headingAr: row.heading_ar,
+      headingEn: row.heading_en,
+      messageAr: row.message_ar,
+      messageEn: row.message_en,
+      url: row.url,
+      image: row.image,
+      onesignalId: row.onesignal_id,
+      status: row.status,
+      recipients: row.recipients,
+      createdAt: row.created_at,
+      error: row.error ?? undefined,
+    })),
+  };
 }
 
 /**

@@ -54,6 +54,7 @@ export default function AdminPage() {
   // Notification history state (📜 History tab)
   const [notifHistory, setNotifHistory] = useState<any[]>([]);
   const [notifHistoryLoading, setNotifHistoryLoading] = useState(false);
+  const [notifHistoryWarning, setNotifHistoryWarning] = useState<string>("");
   async function fetchNotifHistory() {
     setNotifHistoryLoading(true);
     try {
@@ -61,13 +62,16 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         setNotifHistory(data.notifications ?? []);
+        setNotifHistoryWarning(data.warning ?? "");
       } else {
         console.error("Failed to fetch notification history:", data.error);
         setNotifHistory([]);
+        setNotifHistoryWarning(data.error ?? "Failed to load notification history");
       }
     } catch (err) {
       console.error("Error fetching notification history:", err);
       setNotifHistory([]);
+      setNotifHistoryWarning(String(err));
     } finally {
       setNotifHistoryLoading(false);
     }
@@ -87,14 +91,24 @@ export default function AdminPage() {
         );
         return;
       }
-      if ((data.totalCount ?? 0) === 0) {
+      // Nothing else matters until the app can create subscriptions at all:
+      // without a Site URL the browser SDK fails with
+      // "App not configured for web push" and no device can ever register.
+      if (data.webPushConfigured === false || data.pushChannelEnabled === false) {
         setNotifStatus(
-          "❌ 0 devices in this OneSignal app. Open the site on your phone, accept اشترك, then retry."
+          `❌ OneSignal app is not set up for web push (Site URL: ${data.webPushOrigin ?? "unset"} · push channel ${data.pushChannelEnabled ? "enabled" : "disabled"}). In the OneSignal dashboard open Settings → Push & In-App → Web and set the Site URL to this site's origin, then reopen the site and subscribe. ${data.note ?? ""}`
+        );
+        return;
+      }
+      const subs = data.subscriptions ?? data.totalCount ?? 0;
+      if (subs === 0) {
+        setNotifStatus(
+          `❌ 0 subscriptions in this OneSignal app. Open the site, tap the notification bell, accept the prompt, then retry.`
         );
         return;
       }
       setNotifStatus(
-        `App IDs match [${data.serverAppIdPrefix}…] · records: ${data.totalCount} (legacy opted-in: ${data.legacyOptedIn}, valid tokens: ${data.validTokens}). The legacy list can lie for v16 web — just hit Send Now, the send result is the truth.`
+        `✅ App IDs match [${data.serverAppIdPrefix}…] · subscriptions: ${subs} (messageable: ${data.messageableSubscriptions ?? "?"}). One send targets every known subscription.`
       );
     } catch (err) {
       setNotifStatus(`❌ ${String(err)}`);
@@ -160,9 +174,10 @@ export default function AdminPage() {
         setNotifResult(`🚫 ${data.message ?? data.error ?? "Failed"}${data.details ? ` (${data.details})` : ""}`);
       } else {
         // Success - data contains notification info
-        const nid = data.id ? ` (id: ${data.id})` : "";
-        const rec = data.recipients ? ` — recipients: ${data.recipients}` : "";
-        setNotifResult(`✅ Sent!${nid}${rec}`);
+        const nid = data.notificationId ?? data.id ?? null;
+        const rec = typeof data.recipients === "number" ? ` — recipients: ${data.recipients}` : "";
+        const warn = data.historySaved === false ? " ⚠️ saved to OneSignal but not to history" : "";
+        setNotifResult(`✅ Sent!${nid ? ` (id: ${nid})` : ""}${rec}${warn}`);
       }
     } catch (err) {
       setNotifResult(`❌ ${String(err)}`);
@@ -601,6 +616,11 @@ export default function AdminPage() {
                 {notifHistoryLoading ? "Loading…" : "Refresh"}
               </button>
             </div>
+            {notifHistoryWarning && (
+              <p className="mb-3 rounded-xl border border-yellow-500/40 bg-yellow-500/10 p-2 text-xs text-yellow-300">
+                ⚠️ {notifHistoryWarning}
+              </p>
+            )}
             {notifHistory.length === 0 ? (
               <p className="text-sm text-blue-light/50">
                 {notifHistoryLoading ? "Loading notifications…" : "No notifications sent yet."}

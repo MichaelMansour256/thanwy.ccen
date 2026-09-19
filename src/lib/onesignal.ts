@@ -1,6 +1,39 @@
 import { siteConfig } from "@/config";
 import { routing } from "@/i18n/routing";
 
+/**
+ * OneSignal answers HTTP 200 with these error strings whenever the resolved
+ * audience contains no push subscription. Two very different situations look
+ * identical here:
+ *   1. nobody has subscribed yet (users never tapped "Enable"), or
+ *   2. the OneSignal app cannot create subscriptions at all — its Web platform
+ *      is not configured, so `OneSignal.init()` fails in the browser with
+ *      "App not configured for web push" and no subscription is ever created.
+ * Both end up as this error, so the message names both causes instead of
+ * blaming only the users. The prefix is kept stable because
+ * /api/admin/notify string-matches it to label the history record
+ * `failed_no_subscribers`.
+ */
+function noSubscribersError(): Error {
+  return new Error(
+    "No subscribed devices are currently available. " +
+      "Users may have unsubscribed, blocked push, or not yet subscribed. " +
+      "Have them open the site and accept the notification prompt. " +
+      "If no device has ever registered, check that the OneSignal app has a " +
+      "Web platform with a Site URL configured (otherwise the browser SDK " +
+      "fails with \"App not configured for web push\")."
+  );
+}
+
+function mentionsNoSubscribers(errors: string[]): boolean {
+  return errors.some(
+    (e) =>
+      e.includes("not subscribed") ||
+      e.includes("no subscribers") ||
+      e.includes("No players")
+  );
+}
+
 export async function sendNotification({
   headingAr,
   headingEn,
@@ -30,12 +63,17 @@ export async function sendNotification({
   const body = {
     app_id: appId,
     target_channel: "push",
-    // Modern v16 REST API: "Subscribed Users" segment no longer resolves
-    // against Web SDK v16 push subscriptions in some accounts (returns
-    // "All included players are not subscribed"). Use the filters API
-    // instead: session_count exists = every player record OneSignal knows
-    // about (all active push subscribers). This is the current supported
-    // way to "send to all subscribed users" without stale player IDs.
+    // v16 targeting = "every user OneSignal knows about (i.e. every push
+    // subscription)". `filters` is used instead of the "Subscribed Users"
+    // segment so targeting never depends on a dashboard segment name.
+    //
+    // AUDIT NOTE: the previous comment here claimed the "Subscribed Users"
+    // segment no longer resolves for Web SDK v16 subscriptions. That was a
+    // misdiagnosis — every segment AND every filter (including a deliberately
+    // invalid filter field) returns the same
+    // "All included players are not subscribed" while the app has zero
+    // subscriptions. The real cause was always "no subscriptions", not the
+    // targeting method. Both methods are documented and valid.
     filters: [{ field: "session_count", relation: "exists" }],
     headings: { en: headingEn, ar: headingAr },
     contents: { en: messageEn, ar: messageAr },
@@ -66,9 +104,12 @@ export async function sendNotification({
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      // NOTE: keep the `Basic` scheme because your key is the legacy REST API
-      // key (dashboard shows "Delivered", so auth already works).
-      // If you generate a *new* REST API key, OneSignal docs use `Key <key>`.
+      // AUDIT NOTE: ONESIGNAL_API_KEY is a *new-format* App API key
+      // (os_v2_…). OneSignal's docs document `Authorization: Key <key>` for
+      // those keys, but the legacy `Basic <key>` scheme is still accepted and
+      // was verified working against api.onesignal.com for both GET and POST
+      // (auth failures answer 401 / "Access denied"), so the scheme is left
+      // unchanged rather than switched on an unverified assumption.
       Authorization: `Basic ${apiKey}`,
     },
     body: JSON.stringify(body),
@@ -88,19 +129,8 @@ export async function sendNotification({
   if (!res.ok) {
     // HTTP error (not 200)
     const errors = (data as { errors?: string[] }).errors ?? [];
-    if (
-      errors.some(
-        (e) =>
-          e.includes("not subscribed") ||
-          e.includes("no subscribers") ||
-          e.includes("No players")
-      )
-    ) {
-      throw new Error(
-        "No subscribed devices are currently available. " +
-          "Users may have unsubscribed, blocked push, or not yet subscribed. " +
-          "Have them open the site and accept the notification prompt."
-      );
+    if (mentionsNoSubscribers(errors)) {
+      throw noSubscribersError();
     }
     throw new Error(
       `OneSignal API error (HTTP ${res.status}): ${JSON.stringify(data)}`
@@ -112,19 +142,8 @@ export async function sendNotification({
   const responseErrors = data?.errors;
   if (Array.isArray(responseErrors) && responseErrors.length > 0) {
     const errors = responseErrors as string[];
-    if (
-      errors.some(
-        (e) =>
-          e.includes("not subscribed") ||
-          e.includes("no subscribers") ||
-          e.includes("No players")
-      )
-    ) {
-      throw new Error(
-        "No subscribed devices are currently available. " +
-          "Users may have unsubscribed, blocked push, or not yet subscribed. " +
-          "Have them open the site and accept the notification prompt."
-      );
+    if (mentionsNoSubscribers(errors)) {
+      throw noSubscribersError();
     }
     // Other errors - still throw but with the actual error message
     throw new Error(`OneSignal notification errors: ${JSON.stringify(errors)}`);

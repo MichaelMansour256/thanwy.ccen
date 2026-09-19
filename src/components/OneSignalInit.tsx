@@ -7,6 +7,14 @@ declare global {
     OneSignalDeferred?: Array<(OneSignal: any) => void | Promise<void>>;
     __oneSignalInitialized?: boolean;
     __oneSignalPromptPush?: () => Promise<"blocked" | "prompted" | "failed">;
+    /**
+     * Human-readable reason `OneSignal.init()` failed (e.g. the OneSignal app
+     * has no Web platform / Site URL configured, which throws
+     * "App not configured for web push"). Previously this failure was only
+     * logged to the console, so the UI happily showed "Enable notifications"
+     * for an app that can never create a subscription.
+     */
+    __oneSignalInitError?: string | null;
   }
 }
 
@@ -45,6 +53,7 @@ export default function OneSignalInit() {
           // (each locale layout mounts this component).
           if (window.__oneSignalInitialized) return;
           window.__oneSignalInitialized = true;
+          window.__oneSignalInitError = null;
           try {
             await OneSignal.init({
               appId,
@@ -89,6 +98,8 @@ export default function OneSignalInit() {
             };
           } catch (error) {
             window.__oneSignalInitialized = false;
+            window.__oneSignalInitError =
+              error instanceof Error ? error.message : String(error);
             console.error("OneSignal initialization error:", error);
           }
         });

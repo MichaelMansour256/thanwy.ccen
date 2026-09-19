@@ -18,7 +18,13 @@ export async function getVerseRef(): Promise<VerseRef | null> {
     const result = await cloudinary.api.resource(PUBLIC_ID, { resource_type: "raw" });
     const res = await fetch(result.secure_url + `?t=${Date.now()}`);
     return await res.json();
-  } catch {
+  } catch (error) {
+    // Returning null means "no verse configured", which is what callers act
+    // on — but a Cloudinary/network failure also lands here. Without this log
+    // a transient outage made /api/cron/verse-notification answer
+    // {"skipped":"No verse set"} with HTTP 200, i.e. a silently skipped
+    // weekly notification that looked like a healthy cron run.
+    console.error("getVerseRef failed (treating as \"no verse set\"):", error);
     return null;
   }
 }

@@ -1,52 +1,65 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Supabase is configured through `NEXT_PUBLIC_*` environment variables, which
- * Next.js inlines into the bundle during `next build`. Creating the client at
- * module scope therefore made the whole build fail with
- * "supabaseUrl is required." whenever those variables were not present in the
- * build environment (fresh clone, preview deploy, Vercel project without them).
+ * Supabase is configured through environment variables.
  *
- * The client is created lazily instead, so building never depends on Supabase
- * being configured.
+ * `NEXT_PUBLIC_SUPABASE_*` vars are inlined at build time by Next.js. If a
+ * production build (`next build`) runs without them, the inlined value is
+ * `undefined` and the running `next start` process can **never** recover —
+ * even if `.env` is fixed afterward. This was the root cause of the
+ * "Service temporarily unavailable — please try again later" (HTTP 503) error
+ * that appeared in the Prayer Wall when a stale production build lacked the
+ * Supabase credentials.
+ *
+ * To prevent stale-production-build 503s, this module also checks the
+ * non-prefixed `SUPABASE_URL` / `SUPABASE_ANON_KEY` environment variables.
+ * Those are read at **runtime** (from `.env`, the shell, or the deployment
+ * platform) and are NOT inlined into the bundle, so a missing `NEXT_PUBLIC_*`
+ * value can be rescued by the runtime value without rebuilding.
+ *
+ * The non-prefixed vars are safe here because this module is only imported by
+ * server-side API routes — no client code imports it.
  */
+
 /**
- * Supabase is configured through `NEXT_PUBLIC_*` environment variables, which
- * Next.js inlines into the bundle during `next build`. Creating the client at
- * module scope therefore made the whole build fail with
- * "supabaseUrl is required." whenever those variables were not present in the
- * build environment (fresh clone, preview deploy, Vercel project without them).
- *
- * The client is created lazily instead, so building never depends on Supabase
- * being configured.
- *
- * Key naming: Supabase publishes the public key under two names — the classic
- * `NEXT_PUBLIC_SUPABASE_ANON_KEY` and the newer
- * `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the name the Supabase↔Vercel
- * integration manages). Either works.
+ * Key naming: Supabase publishes the public (anon) key under two names — the
+ * classic `*_ANON_KEY` and the newer `*_PUBLISHABLE_KEY`. We accept both
+ * prefixes (`NEXT_PUBLIC_` and plain).
  */
 function supabaseKey(): string | undefined {
   return (
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    undefined
+  );
+}
+
+function supabaseUrl(): string | undefined {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
     undefined
   );
 }
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && supabaseKey());
+  return Boolean(supabaseUrl() && supabaseKey());
 }
 
 let client: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
   if (!client) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const url = supabaseUrl();
     const key = supabaseKey();
 
     if (!url || !key) {
       throw new Error(
-        "Supabase is not configured — set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)."
+        "Supabase is not configured — set NEXT_PUBLIC_SUPABASE_URL and " +
+          "NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) " +
+          "in your environment, or the non-prefixed SUPABASE_URL / SUPABASE_ANON_KEY aliases."
       );
     }
 

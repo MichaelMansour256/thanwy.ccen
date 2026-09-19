@@ -11,6 +11,7 @@ export default function PrayerWallPage() {
 
   const [prayers, setPrayers] = useState<Prayer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [name, setName] = useState("");
   const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -29,10 +30,28 @@ export default function PrayerWallPage() {
   });
 
   useEffect(() => {
-    fetch("/api/prayer")
-      .then((r) => r.json())
-      .then((data) => { setPrayers(Array.isArray(data) ? data : []); setLoading(false); });
+    loadPrayers();
   }, []);
+
+  function loadPrayers() {
+    setLoading(true);
+    setLoadError("");
+    fetch("/api/prayer")
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then((data) => {
+        setPrayers(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoadError(
+          isAr ? "تعذر تحميل طلبات الصلاة — حاول مرة أخرى" : "Failed to load prayer requests — please try again"
+        );
+        setLoading(false);
+      });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,11 +67,13 @@ export default function PrayerWallPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         // A failed insert must never look like a successful submission.
-        setSubmitError(
-          res.status === 503
-            ? isAr ? "الخدمة غير متاحة حالياً — حاول لاحقاً" : "Service temporarily unavailable — please try again later"
-            : data.error ?? (isAr ? "حدث خطأ — حاول مرة أخرى" : "Something went wrong — please try again")
-        );
+        // Surface the server's own error message when present (e.g. "Supabase
+        // is not configured") so the user knows *why* the 503 happened,
+        // falling back to a localized generic message.
+        const fallback = res.status === 503
+          ? isAr ? "الخدمة غير متاحة حالياً — حاول لاحقاً" : "Service temporarily unavailable — please try again later"
+          : isAr ? "حدث خطأ — حاول مرة أخرى" : "Something went wrong — please try again";
+        setSubmitError(data.error || fallback);
         return;
       }
       setSubmitted(true);
@@ -131,6 +152,17 @@ export default function PrayerWallPage() {
         {loading ? (
           <div className="flex justify-center pt-8 text-blue-light/50 text-sm">
             {isAr ? "جاري التحميل…" : "Loading…"}
+          </div>
+        ) : loadError ? (
+          <div className="flex flex-col items-center pt-8 gap-3">
+            <span className="text-4xl">⚠️</span>
+            <p className="text-sm text-center text-red-400">{loadError}</p>
+            <button
+              onClick={loadPrayers}
+              className="rounded-xl bg-blue-accent py-2 text-sm font-semibold text-white hover:bg-blue-mid transition"
+            >
+              {isAr ? "إعادة المحاولة" : "Retry"}
+            </button>
           </div>
         ) : prayers.length === 0 ? (
           <div className="flex flex-col items-center pt-8 gap-2 text-blue-light/40">

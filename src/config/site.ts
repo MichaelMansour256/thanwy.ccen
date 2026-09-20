@@ -10,7 +10,7 @@ export interface SocialLink {
 }
 
 /** Fallback used when NEXT_PUBLIC_SITE_URL is unset, empty or malformed. */
-const DEFAULT_SITE_URL = "https://thanwy.ccen";
+const DEFAULT_SITE_URL = "https://thanwy-ccen.vercel.app";
 
 /**
  * Resolve the public site URL from the environment.
@@ -46,8 +46,8 @@ export const siteConfig = {
   shortName: "Thanwy",
   /** Site description (SEO metadata + PWA manifest). */
   description: {
-    en: "Thanwy Youth Meeting – Christ Church",
-    ar: "اجتماع شباب ثانوي · كنيسة المسيح",
+    en: "Thanwy Youth Meeting – Christ Church Ezbet El Nakhl",
+    ar: "اجتماع شباب ثانوي · كنيسة المسيح – عزبة النخل",
   },
   /**
    * Public site URL — base for push-notification click-through links, canonical
@@ -60,8 +60,8 @@ export const siteConfig = {
 
   /** The church this meeting belongs to. */
   church: {
-    name: "Christ Church",
-    nameAr: "كنيسة المسيح",
+    name: "Christ Church – Ezbet El Nakhl",
+    nameAr: "كنيسة المسيح – عزبة النخل",
   },
 
   /**

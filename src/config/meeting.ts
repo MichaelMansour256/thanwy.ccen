@@ -25,11 +25,11 @@ export const meetingConfig = {
   hero: {
     welcome: {
       ar: "أهلاً بيكم في اجتماع ثانوي",
-      en: "Welcome to Thanwy Meeting",
+      en: "thanwy ccen",
     },
     subtitle: {
-      ar: "اجتماع شباب ثانوي · كنيسة المسيح",
-      en: "Thanwy Youth Meeting · Christ Church",
+      ar: "اجتماع شباب ثانوي · كنيسة المسيح – عزبة النخل",
+      en: "Thanwy Youth Meeting · Christ Church – Ezbet El Nakhl",
     },
   },
 
@@ -58,8 +58,8 @@ export const meetingConfig = {
 
   /** Meeting location (the church itself lives in `siteConfig.church`). */
   location: {
-    name: "كنيسة المسيح",
-    nameEn: "Christ Church",
+    name: "كنيسة المسيح – عزبة النخل",
+    nameEn: "Christ Church – Ezbet El Nakhl",
   },
 
   /** "About" page content. */

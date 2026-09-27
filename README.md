@@ -6,7 +6,7 @@ A modern, mobile-first Progressive Web App for the **Thanwy Youth Meeting** at *
 
 The platform brings together weekly meeting information, Bible content, games, event photos, prayer requests, push notifications, and administrative tools in one centralized experience.
 
-**Live Website:** https://thanwy.ccen/
+**Live Website:** https://thanwy-ccen.vercel.app
 
 ---
 

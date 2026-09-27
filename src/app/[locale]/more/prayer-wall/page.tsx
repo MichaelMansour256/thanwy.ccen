@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import PageHeader from "@/components/PageHeader";
 
@@ -29,11 +29,7 @@ export default function PrayerWallPage() {
     }
   });
 
-  useEffect(() => {
-    loadPrayers();
-  }, []);
-
-  function loadPrayers() {
+  const loadPrayers = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     fetch("/api/prayer")
@@ -51,7 +47,11 @@ export default function PrayerWallPage() {
         );
         setLoading(false);
       });
-  }
+  }, [isAr]);
+
+  useEffect(() => {
+    queueMicrotask(() => void loadPrayers());
+  }, [loadPrayers]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

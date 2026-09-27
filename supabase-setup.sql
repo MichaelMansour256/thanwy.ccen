@@ -61,10 +61,10 @@ create index if not exists idx_notifications_sent_at
 
 alter table notifications_history enable row level security;
 
+-- Notification history is server-only. The public inbox is exposed through a
+-- sanitized API route; anon/authenticated roles cannot read internal delivery
+-- fields or insert history rows directly.
 drop policy if exists "anon insert notifications_history" on notifications_history;
-create policy "anon insert notifications_history" on notifications_history
-  for insert to anon with check (true);
-
 drop policy if exists "anon read notifications_history" on notifications_history;
-create policy "anon read notifications_history" on notifications_history
-  for select to anon using (true);
+revoke all on table notifications_history from anon, authenticated;
+grant select, insert, update, delete on table notifications_history to service_role;

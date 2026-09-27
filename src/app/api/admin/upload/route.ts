@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { isAuthorized } from "@/lib/auth";
+import { isOwnedCloudinaryFolder } from "@/lib/cloudinary-ownership";
 
 export async function POST(req: Request) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -9,8 +10,8 @@ export async function POST(req: Request) {
   const folder = formData.get("folder") as string;
   const files = formData.getAll("files") as File[];
 
-  if (!folder || !files.length) {
-    return NextResponse.json({ error: "Folder and files required" }, { status: 400 });
+  if (!isOwnedCloudinaryFolder(folder) || !files.length) {
+    return NextResponse.json({ error: "Owned folder and files required" }, { status: 400 });
   }
 
   try {

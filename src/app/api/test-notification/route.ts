@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendNotification } from "@/lib/onesignal";
+import { putNotificationRecord } from "@/lib/notifications-history";
 import { routing } from "@/i18n/routing";
 
 export async function POST(req: Request) {
@@ -36,6 +37,27 @@ export async function POST(req: Request) {
       messageEn,
       url,
     });
+
+    try {
+      await putNotificationRecord({
+        id: crypto.randomUUID(),
+        sentAt: new Date().toISOString(),
+        headingAr,
+        headingEn,
+        messageAr,
+        messageEn,
+        url,
+        image: null,
+        onesignalId: result.id ?? null,
+        status: "sent",
+        recipients: result.recipients ?? null,
+      });
+    } catch (historyError) {
+      console.warn(
+        "[test-notification] notification sent but history save failed:",
+        historyError
+      );
+    }
 
     return NextResponse.json({ success: true, result });
   } catch (error) {

@@ -54,11 +54,12 @@ The application supports both **Arabic and English**, with a fully responsive **
 The platform includes:
 
 - 📅 Weekly and special events
-- 📖 Bible verses and resources
+- 📖 Bible verses, studies, and resources
 - 🎮 Bible-based games
 - 🖼️ Event photo galleries
 - 🙏 Community prayer wall
-- 🔔 Push notifications
+- 🔔 Push notifications and an in-app notification inbox
+- 📋 QR attendance, absence tracking, and reports
 - 👥 Servants directory
 - ℹ️ Meeting information and contact details
 - 🔐 Administrative dashboard
@@ -119,7 +120,11 @@ The application retrieves the Arabic verse text dynamically using the **Smith & 
 
 #### Studies & Resources
 
-The application architecture also provides dedicated sections for Bible studies and additional resources.
+Bible content is managed through separate **Studies** and **Resources** sections.
+The shared content model supports Arabic/English metadata, optional Bible passage
+references, and optional links to a study. A resource may be standalone, linked
+to a Bible passage, or related to a study; the database does not force every
+resource into a lesson/verse relationship.
 
 ---
 
@@ -171,9 +176,7 @@ The Prayer Wall uses Supabase for data storage and real-time functionality.
 
 ### 🔔 Push Notifications
 
-The platform uses **OneSignal** to deliver web push notifications.
-
-Administrators can send notifications directly from the admin dashboard.
+The platform uses **OneSignal** to deliver web push notifications. Administrators can send notifications from the protected admin dashboard, and visitors can read the same successful notification records in the localized **Notifications Inbox**. Inbox read state is stored per OneSignal subscription when the read-state migration is applied, with a device-local fallback for visitors without a push subscription.
 
 Each notification can include:
 
@@ -189,7 +192,7 @@ Supported destination shortcuts include:
 - ✨ Verse
 - 🔗 Custom URL
 
-The system also records notification metadata and delivery information in Supabase for administrative history and auditing.
+The system also records notification metadata and delivery information in Supabase for administrative history, auditing, and the public inbox. Failed sends remain internal and are not shown in the public inbox.
 
 ---
 
@@ -207,8 +210,12 @@ Access is protected using an environment-configured administrator password.
 | 🔔 Notify | Send push notifications |
 | 📜 History | View notification history and recipient counts |
 | 🙏 Prayer | Approve, reject, and delete prayer requests |
+| 📚 Content | Manage Studies and Resources, publication, categories, and Bible references |
+| 📋 Attendance | Manage members, QR codes, meetings, scanner, dashboard, absence, and reports |
 
 ---
+
+The QR attendance section is available at `/admin/attendance`. It provides member and meeting management, secure QR generation, a camera scanner (`jsqr`), staff-only attendance confirmation, live dashboard totals, per-member history, absence reports, and Excel export (`exceljs`). A public QR identifies a member only; it cannot record attendance. Recording is protected by the existing admin/servant password check on every request and by the attendance database rules.
 
 ## 🌍 Internationalization
 
@@ -280,7 +287,7 @@ The project includes:
 | Push Notifications | OneSignal |
 | Deployment | Vercel |
 
-The project dependencies include Next.js, React, TypeScript, Tailwind CSS, Supabase, Cloudinary, `next-intl`, `next-pwa`, and `react-dropzone`.
+The project dependencies include Next.js, React, TypeScript, Tailwind CSS, Supabase, Cloudinary, `next-intl`, `next-pwa`, `react-dropzone`, `exceljs` (attendance export), `jsqr` (camera scanning), and `qrcode` (QR generation).
 
 ---
 
@@ -386,14 +393,22 @@ Create a `.env.local` file:
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+CLOUDINARY_MEETING_FOLDER=
+CLOUDINARY_GALLERY_FOLDER=
 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 
 NEXT_PUBLIC_ONESIGNAL_APP_ID=
+ONESIGNAL_APP_ID=
 ONESIGNAL_API_KEY=
 
+NEXT_PUBLIC_SITE_URL=
 ADMIN_PASSWORD=
+CRON_SECRET=
 ```
 
 ### Environment Variables
@@ -407,7 +422,12 @@ ADMIN_PASSWORD=
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public API key |
 | `NEXT_PUBLIC_ONESIGNAL_APP_ID` | OneSignal application ID |
 | `ONESIGNAL_API_KEY` | OneSignal REST API key |
-| `ADMIN_PASSWORD` | Admin dashboard password |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase service role; required for history, content admin, and attendance |
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Optional runtime aliases for the public Supabase values |
+| `NEXT_PUBLIC_SITE_URL` | Public origin used in OneSignal click-through URLs |
+| `CLOUDINARY_MEETING_FOLDER` / `CLOUDINARY_GALLERY_FOLDER` | Unique meeting-owned Cloudinary namespaces |
+| `CRON_SECRET` | Bearer secret for Vercel cron and test-notification routes |
+| `ADMIN_PASSWORD` | Admin dashboard and staff attendance password |
 
 > **Security:** Never commit `.env.local` or expose private API keys such as `CLOUDINARY_API_SECRET` or `ONESIGNAL_API_KEY`.
 
@@ -419,21 +439,24 @@ The project uses Supabase for persistent application data.
 
 The main database features include:
 
-- Prayer requests
-- Notification history
-- Moderation status
-- Prayer counters
-- Notification metadata
+- Prayer requests and moderation
+- Notification history and per-device inbox read state
+- Studies and Resources with optional passage/study relationships
+- QR attendance members, meetings, records, and absence reports
 
-The repository includes:
+Apply these files to the **same Thanwy-owned Supabase project**, in this order:
 
 ```text
 supabase-notifications-history.sql
+supabase-notification-reads.sql
+supabase-content-library.sql
+supabase-attendance-migration.sql
+supabase-attendance-lockdown.sql   # existing attendance deployments
 ```
 
-for configuring the notification history table.
-
-Make sure Row Level Security policies are configured appropriately for your deployment.
+The files intentionally create no meeting records. Keep RLS enabled, use the
+service-role key only in server routes, and never point Thanwy at another
+meeting's Supabase project.
 
 ---
 
@@ -477,6 +500,12 @@ npm run lint
 
 Runs ESLint.
 
+```bash
+npm run typecheck
+```
+
+Runs the TypeScript compiler without emitting files.
+
 These scripts are defined in the project's `package.json`.
 
 ---
@@ -515,6 +544,8 @@ The application contains several server-side integrations and therefore requires
 CLOUDINARY_API_SECRET
 ONESIGNAL_API_KEY
 ADMIN_PASSWORD
+SUPABASE_SERVICE_ROLE_KEY
+CRON_SECRET
 ```
 
 Public client-side configuration may include:

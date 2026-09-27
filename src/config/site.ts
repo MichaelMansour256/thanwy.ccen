@@ -88,16 +88,14 @@ export const siteConfig = {
   },
 
   /**
-   * Cloudinary namespace that stores this meeting's app data:
-   * `<meetingFolder>/events` (special-events JSON) and
-   * `<meetingFolder>/verse_of_week` (verse JSON). Gallery event folders and
-   * the `invitations` folder live outside it in the same cloud account.
-   * Override with CLOUDINARY_MEETING_FOLDER so each meeting keeps its own
-   * namespace and never reads or writes another meeting's data (a blank value
-   * falls back to the default below).
+   * Cloudinary namespaces owned by this meeting. All server routes that list,
+   * create, upload, or delete assets must enforce these prefixes.
    */
   cloudinary: {
+    /** App data, invitations, and content covers. */
     meetingFolder: process.env.CLOUDINARY_MEETING_FOLDER?.trim() || "thanwy_events",
+    /** Public gallery root; event folders are created beneath it. */
+    galleryFolder: process.env.CLOUDINARY_GALLERY_FOLDER?.trim() || "thanwy_gallery",
   },
 };
 

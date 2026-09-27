@@ -34,6 +34,13 @@ function mentionsNoSubscribers(errors: string[]): boolean {
   );
 }
 
+type OneSignalResponse = {
+  id?: string;
+  recipients?: number;
+  errors?: string[];
+  rawResponse?: string;
+};
+
 export async function sendNotification({
   headingAr,
   headingEn,
@@ -48,7 +55,7 @@ export async function sendNotification({
   messageEn: string;
   url?: string;
   image?: string;
-}) {
+}): Promise<OneSignalResponse> {
   const appId = process.env.ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_API_KEY;
   if (!appId || !apiKey) {
@@ -115,9 +122,9 @@ export async function sendNotification({
     body: JSON.stringify(body),
   });
 
-  let data: any;
+  let data: OneSignalResponse;
   try {
-    data = await res.json();
+    data = (await res.json()) as OneSignalResponse;
   } catch {
     data = { rawResponse: await res.text() };
   }

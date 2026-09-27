@@ -43,7 +43,7 @@ export default function VerseOfWeekPage() {
             <div className="relative w-full rounded-3xl border border-blue-accent/30 bg-gradient-to-br from-blue-primary/60 to-blue-dark/80 p-6 backdrop-blur-sm shadow-xl shadow-blue-accent/10"
               dir="rtl">
               {/* Decorative quote mark */}
-              <span className="absolute top-4 right-5 text-6xl text-blue-accent/10 font-serif leading-none select-none">"</span>
+              <span className="absolute top-4 right-5 select-none font-serif text-6xl leading-none text-blue-accent/10">&quot;</span>
 
               <p className="text-xl leading-loose text-white font-medium tracking-wide">
                 {verse.text}

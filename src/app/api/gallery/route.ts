@@ -2,17 +2,17 @@ import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { siteConfig } from "@/config";
 
-// Hide the app-data folders (invitation images + meeting JSON namespace)
-// from the public gallery.
-const EXCLUDED_FOLDERS = ["invitations","notifications", siteConfig.cloudinary.meetingFolder];
+/** Public gallery root. Event folders are direct children of this path. */
+const GALLERY_FOLDER = siteConfig.cloudinary.galleryFolder;
 
 export async function GET() {
   try {
-    const { folders } = await cloudinary.api.root_folders();
+    const { folders } = await cloudinary.api.sub_folders(GALLERY_FOLDER);
 
-    const visibleFolders = folders.filter(
-      (f: { name: string; path: string }) => !EXCLUDED_FOLDERS.includes(f.path)
-    );
+    const visibleFolders = folders.map((folder: { name: string; path: string }) => ({
+      name: folder.name,
+      path: folder.path,
+    }));
 
     const events = await Promise.all(
       visibleFolders.map(async (folder: { name: string; path: string }) => {
@@ -35,7 +35,9 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json(events.filter((e) => e.photos.length > 0));
+    return NextResponse.json(
+      events.filter((event: { photos: unknown[] }) => event.photos.length > 0)
+    );
   } catch (err) {
     // Log the real cause (missing/invalid Cloudinary credentials, network…)
     // so it shows up in the Vercel function logs instead of failing silently.

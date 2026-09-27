@@ -1,19 +1,33 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { BIBLE_BOOKS } from "@/lib/bibleBooks";
+import ContentManager from "@/components/admin/ContentManager";
+import { ADMIN_PASSWORD_STORAGE_KEY } from "@/hooks/useAdminAuth";
 import { meetingConfig } from "@/config";
 import { routing } from "@/i18n/routing";
 type Photo = { id: string; url: string; width: number; height: number };
 type GalleryEvent = { name: string; path: string; photos: Photo[] };
 type SpecialEvent = { id: string; title: string; titleAr: string; date: string; time: string; description?: string; descriptionAr?: string };
+type NotificationHistoryItem = {
+  id: string;
+  headingEn?: string | null;
+  headingAr?: string | null;
+  messageEn?: string | null;
+  messageAr?: string | null;
+  status?: string | null;
+  recipients?: number | null;
+  onesignalId?: string | null;
+  sentAt?: string | null;
+};
 const inputCls = "w-full rounded-xl bg-blue-dark/60 px-4 py-2 text-white placeholder-blue-light/40 outline-none ring-1 ring-blue-mid/40 focus:ring-blue-accent text-sm";
 export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState(false);
-  const [tab, setTab] = useState<"gallery" | "events" | "verse" | "prayer" | "notify" | "history">("gallery");
+  const [tab, setTab] = useState<"gallery" | "events" | "verse" | "prayer" | "notify" | "history" | "content">("gallery");
   // Prayer state
   type PrayerRequest = { id: string; name: string; request: string; pray_count: number; status: string; created_at: string };
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
@@ -52,7 +66,7 @@ export default function AdminPage() {
   const [notifResult, setNotifResult] = useState<string>("");
   const [notifStatus, setNotifStatus] = useState<string>("");
   // Notification history state (📜 History tab)
-  const [notifHistory, setNotifHistory] = useState<any[]>([]);
+  const [notifHistory, setNotifHistory] = useState<NotificationHistoryItem[]>([]);
   const [notifHistoryLoading, setNotifHistoryLoading] = useState(false);
   const [notifHistoryWarning, setNotifHistoryWarning] = useState<string>("");
   async function fetchNotifHistory() {
@@ -205,19 +219,34 @@ export default function AdminPage() {
     setInvitations(Array.isArray(data) ? data : []);
   }, []);
   const fetchPrayers = useCallback(async () => {
-    const res = await fetch("/api/admin/prayer", { headers });
+    const res = await fetch("/api/admin/prayer", {
+      headers: { "x-admin-password": password },
+    });
     const data = await res.json();
     setPrayers(Array.isArray(data) ? data : []);
   }, [password]);
   useEffect(() => {
-    if (authed) { fetchFolders(); fetchSpecialEvents(); fetchInvitations(); fetchPrayers(); }
-  }, [authed, fetchFolders, fetchSpecialEvents, fetchInvitations, fetchPrayers]);
-  function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    fetch("/api/admin/auth", { method: "POST", headers }).then((r) => {
-      if (r.status === 401) { setAuthError(true); return; }
-      setAuthed(true);
+    if (!authed) return;
+    queueMicrotask(() => {
+      void fetchFolders();
+      void fetchSpecialEvents();
+      void fetchInvitations();
+      void fetchPrayers();
     });
+  }, [authed, fetchFolders, fetchSpecialEvents, fetchInvitations, fetchPrayers]);
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/admin/auth", { method: "POST", headers });
+      if (!response.ok) {
+        setAuthError(true);
+        return;
+      }
+      window.sessionStorage.setItem(ADMIN_PASSWORD_STORAGE_KEY, password);
+      setAuthed(true);
+    } catch {
+      setAuthError(true);
+    }
   }
   async function createFolder() {
     if (!newFolder.trim()) return;
@@ -237,12 +266,16 @@ export default function AdminPage() {
       const fd = new FormData();
       fd.append("folder", selectedFolder);
       fd.append("files", files[i]);
-      await fetch("/api/admin/upload", { method: "POST", headers, body: fd });
+      await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "x-admin-password": password },
+        body: fd,
+      });
     }
     setUploading(false);
     setUploadProgress("");
     fetchFolders();
-  }, [selectedFolder, headers, fetchFolders]);
+  }, [selectedFolder, password, fetchFolders]);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { "image/*": [] }, multiple: true });
   async function deletePhoto(publicId: string) {
     if (!confirm("Delete this photo?")) return;
@@ -295,12 +328,20 @@ export default function AdminPage() {
     <div className="min-h-dvh px-4 py-6 page-gradient">
       <div className="mx-auto max-w-2xl">
         <h1 className="mb-4 text-2xl font-bold text-white">🛠 Admin Dashboard</h1>
+        <div className="mb-4 text-center">
+          <Link
+            href="/admin/attendance/dashboard"
+            className="inline-flex items-center justify-center rounded-xl bg-green-500/15 px-4 py-2 text-sm font-semibold text-green-300 transition hover:bg-green-500/25"
+          >
+            📋 Attendance System
+          </Link>
+        </div>
         {/* Tabs */}
         <div className="grid grid-cols-2 gap-2 mb-6">
-          {(["gallery", "events", "verse", "prayer", "notify", "history"] as const).map((t) => (
+          {(["gallery", "events", "verse", "prayer", "notify", "history", "content"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
               className={`rounded-xl py-2 text-sm font-semibold transition ${tab === t ? "bg-blue-accent text-white" : "bg-blue-primary/40 text-blue-light/70"}`}>
-              {t === "gallery" ? "🖼️ Gallery" : t === "events" ? "📅 Events" : t === "verse" ? "✨ Verse" : t === "prayer" ? "🙏 Prayer" : t === "notify" ? "🔔 Notify" : "📜 Notification History"}
+              {t === "gallery" ? "🖼️ Gallery" : t === "events" ? "📅 Events" : t === "verse" ? "✨ Verse" : t === "prayer" ? "🙏 Prayer" : t === "notify" ? "🔔 Notify" : t === "content" ? "📚 Studies & Resources" : "📜 Notification History"}
             </button>
           ))}
         </div>
@@ -679,7 +720,9 @@ export default function AdminPage() {
             )}
           </section>
         )}
+        {/* ── CONTENT TAB (Studies & Resources) ── */}
+        {tab === "content" && <ContentManager password={password} />}
       </div>
     </div>
   );
-}
+}

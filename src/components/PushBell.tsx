@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Explicit push opt-in bell. Lives in the More page so users can
@@ -26,7 +26,7 @@ export default function PushBell({ locale }: { locale: string }) {
   const [subId, setSubId] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     if (typeof Notification === "undefined") {
       setState("unsupported");
       return;
@@ -66,19 +66,19 @@ export default function PushBell({ locale }: { locale: string }) {
     } catch {
       setState("off");
     }
-  }
+  }, []);
 
   useEffect(() => {
-    refresh();
+    queueMicrotask(() => void refresh());
     // Re-check when the tab regains focus (user may have allowed in settings).
-    const onFocus = () => refresh();
+    const onFocus = () => void refresh();
     window.addEventListener("focus", onFocus);
-    const t = setInterval(refresh, 5000);
+    const timer = window.setInterval(() => void refresh(), 5000);
     return () => {
       window.removeEventListener("focus", onFocus);
-      clearInterval(t);
+      window.clearInterval(timer);
     };
-  }, []);
+  }, [refresh]);
 
   async function enable() {
     setBusy(true);

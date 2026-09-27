@@ -1,7 +1,9 @@
-// Shared helpers for weekly invitations (Cloudinary folder: `invitations`).
-// public_id format: `invitations/YYYY-MM-DD` (date = the weekly meeting day).
+// Shared helpers for weekly invitations. Every asset is namespaced beneath
+// Thanwy's app-data folder; public IDs use `<meetingFolder>/invitations/YYYY-MM-DD`.
 import cloudinary from "./cloudinary";
-import { meetingConfig } from "@/config";
+import { meetingConfig, siteConfig } from "@/config";
+
+const INVITATIONS_FOLDER = `${siteConfig.cloudinary.meetingFolder}/invitations`;
 
 export type Invitation = {
   date: string; // YYYY-MM-DD
@@ -12,15 +14,15 @@ export type Invitation = {
 export async function getInvitations(): Promise<Invitation[]> {
   try {
     const { resources } = await cloudinary.search
-      .expression("folder:invitations")
+      .expression(`folder:${INVITATIONS_FOLDER}`)
       .sort_by("public_id", "desc")
       .max_results(200)
       .execute();
 
     return resources.map(
       (r: { public_id: string; secure_url: string }) => ({
-        // public_id format: invitations/YYYY-MM-DD (may have suffix on overwrite)
-        date: r.public_id.replace("invitations/", "").split("_")[0],
+        // public_id format: <meetingFolder>/invitations/YYYY-MM-DD
+        date: r.public_id.replace(`${INVITATIONS_FOLDER}/`, "").split("_")[0],
         url: r.secure_url,
         publicId: r.public_id,
       })
@@ -46,7 +48,7 @@ export function todayCairoISO(now = new Date()): string {
  * If today (Cairo) is the meeting day, returns *next week's* date so the
  * reminder always points at the upcoming meeting, not today's.
  */
-export function nextFridayCairoISO(now = new Date()): string {
+export function nextMeetingCairoISO(now = new Date()): string {
   const MEETING_WEEKDAY = meetingConfig.schedule.weekday; // 0=Sun..6=Sat
   // Cairo weekday: 0=Sun..5=Fri..6=Sat
   const short = new Intl.DateTimeFormat("en-US", {

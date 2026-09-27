@@ -2,7 +2,10 @@
 // Replaces the previous file-based storage (public/notifications-history.json)
 // which doesn't work on Vercel/serverless (read-only filesystem)
 
-import { getSupabase, isSupabaseConfigured } from "./supabase";
+import {
+  getSupabaseAdmin,
+  isSupabaseAdminConfigured,
+} from "./supabase";
 
 export interface NotificationRecord {
   id: string;
@@ -26,12 +29,13 @@ export interface NotificationRecord {
 export async function putNotificationRecord(
   record: Omit<NotificationRecord, "createdAt">
 ): Promise<void> {
-  if (!isSupabaseConfigured()) {
-    console.error("Supabase is not configured — notification record not saved.");
-    return;
+  if (!isSupabaseAdminConfigured()) {
+    throw new Error(
+      "Supabase service access is not configured — notification history cannot be saved."
+    );
   }
 
-  const { error } = await getSupabase()
+  const { error } = await getSupabaseAdmin()
     .from("notifications_history")
     .insert({
       id: record.id,
@@ -73,14 +77,14 @@ export interface NotificationHistoryResult {
 }
 
 export async function getNotificationHistory(): Promise<NotificationHistoryResult> {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseAdminConfigured()) {
     const message =
-      "Supabase is not configured — notification history is unavailable.";
+      "Supabase service access is not configured — notification history is unavailable.";
     console.error(message);
     return { records: [], error: message };
   }
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from("notifications_history")
     .select("*")
     .order("sent_at", { ascending: false })
@@ -138,12 +142,14 @@ export async function getNotificationHistory(): Promise<NotificationHistoryResul
 export async function getNotificationById(
   id: string
 ): Promise<NotificationRecord | null> {
-  if (!isSupabaseConfigured()) {
-    console.error("Supabase is not configured — notification lookup skipped.");
+  if (!isSupabaseAdminConfigured()) {
+    console.error(
+      "Supabase service access is not configured — notification lookup skipped."
+    );
     return null;
   }
 
-  const { data, error } = await getSupabase()
+  const { data, error } = await getSupabaseAdmin()
     .from("notifications_history")
     .select("*")
     .eq("id", id)
@@ -171,6 +177,65 @@ export async function getNotificationById(
     recipients: data.recipients,
     createdAt: data.created_at,
     error: data.error,
+  };
+}
+
+/** Sanitized notification shape exposed to the public inbox. */
+export interface PublicNotification {
+  id: string;
+  sentAt: string;
+  headingAr: string;
+  headingEn: string;
+  messageAr: string;
+  messageEn: string;
+  url: string;
+  image: string | null;
+}
+
+/**
+ * Paginated public inbox feed. Only successful sends are returned and internal
+ * delivery fields never leave the server. The extra row detects `hasMore`.
+ */
+export async function listPublicNotifications(
+  limit = 20,
+  offset = 0
+): Promise<{ notifications: PublicNotification[]; hasMore: boolean }> {
+  if (!isSupabaseAdminConfigured()) {
+    throw new Error("Supabase service access is not configured.");
+  }
+
+  const { data, error } = await getSupabaseAdmin()
+    .from("notifications_history")
+    .select("id, sent_at, heading_ar, heading_en, message_ar, message_en, url, image")
+    .eq("status", "sent")
+    .order("sent_at", { ascending: false })
+    .range(offset, offset + limit);
+
+  if (error) throw error;
+
+  type PublicRow = {
+    id: string;
+    sent_at: string;
+    heading_ar: string;
+    heading_en: string;
+    message_ar: string;
+    message_en: string;
+    url: string;
+    image: string | null;
+  };
+  const rows = (data ?? []) as PublicRow[];
+  return {
+    notifications: rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      sentAt: row.sent_at,
+      headingAr: row.heading_ar,
+      headingEn: row.heading_en,
+      messageAr: row.message_ar,
+      messageEn: row.message_en,
+      url: row.url,
+      image: row.image,
+    })),
+    hasMore: rows.length > limit,
   };
 }
 

@@ -24,16 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_notifications_sent_at ON notifications_history(se
 -- Enable RLS (Row Level Security)
 ALTER TABLE notifications_history ENABLE ROW LEVEL SECURITY;
 
--- IMPORTANT: the site's API routes call Supabase with the ANON key (this app
--- has no user logins) — an `auth.role() = 'authenticated'` policy would block
--- every insert with "new row violates row-level security policy". The admin
--- password gate lives in the API routes, not in the database.
--- Prefer running supabase-setup.sql (repo root) — it creates both tables and
--- all policies in one script. Policies kept here for standalone use:
-DROP POLICY IF EXISTS "anon insert notifications_history" ON notifications_history;
-CREATE POLICY "anon insert notifications_history" ON notifications_history
-  FOR INSERT TO anon WITH CHECK (true);
-
-DROP POLICY IF EXISTS "anon read notifications_history" ON notifications_history;
-CREATE POLICY "anon read notifications_history" ON notifications_history
-  FOR SELECT TO anon USING (true);
+-- Server-only access. Public users read the sanitized /api/notifications feed;
+-- direct anon/authenticated access to internal delivery fields is not allowed.
+REVOKE ALL ON TABLE notifications_history FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE notifications_history TO service_role;

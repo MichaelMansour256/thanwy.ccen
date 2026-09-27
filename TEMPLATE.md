@@ -143,8 +143,10 @@ cp .env.example .env.local
 ```
 
 Fill in **your own** Supabase project, Cloudinary account, OneSignal app,
-admin password and cron secret (never commit real secrets). Set
-`NEXT_PUBLIC_SITE_URL` to your deployed URL so push-notification links work.
+admin password, cron secret, and (if needed) meeting-specific folder overrides
+(never commit real secrets). Set `NEXT_PUBLIC_SITE_URL` to the deployed URL so
+push-notification links work. `SUPABASE_SERVICE_ROLE_KEY` is required for the
+notification history, content administration, and all attendance operations.
 
 ### 9. Configure Supabase / Cloudinary / OneSignal
 
@@ -208,7 +210,10 @@ npm run dev     # http://localhost:3000
 | Servants | ✅ card grid | `servants.ts` + photos |
 | Schedule / countdown | ✅ logic (`lib/schedule.ts`) | `meeting.ts` → `schedule` |
 | Push notifications | ✅ logic | OneSignal env (app id / key) |
-| Prayer wall / notif history | ✅ logic | Supabase env (URL / anon key) |
+| Notification inbox | ✅ logic | Supabase history/read-state migrations + OneSignal env |
+| Prayer wall | ✅ logic | Supabase env (URL / anon key) |
+| Studies / resources | ✅ logic | Supabase `content_library` migration |
+| QR attendance / absence | ✅ logic | Supabase attendance migrations, `ADMIN_PASSWORD`, unique Cloudinary namespace |
 | Gallery / invitations / events | ✅ logic | Cloudinary env + folder namespace |
 | Admin dashboard | ✅ | `ADMIN_PASSWORD` env |
 | Bible verse of the week | ✅ (GetBible API) | admin-selected weekly verse data |
@@ -230,8 +235,8 @@ to brand the new meeting:
 - The **Verse Up Arena** game embed (`src/app/[locale]/games/page.tsx` →
   `verse-up-arena.vercel.app`) is an external product tied to this ecosystem —
   change the URL/logo in the games page for a different game platform.
-- Supabase data itself (prayer requests / notification history) — use a fresh
-  project per meeting so moderation queues stay separate.
+- Supabase data itself (prayer requests / notifications / content / attendance) — use a fresh
+  project per meeting so records and read state remain isolated.
 - Repository URL references in the README (deployment history).
 
 ## Known TODOs For This Meeting

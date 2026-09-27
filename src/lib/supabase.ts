@@ -1,3 +1,4 @@
+import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -48,6 +49,57 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(supabaseUrl() && supabaseKey());
 }
 
+/** Accept current `sb_secret_…` keys and legacy service_role JWTs. */
+function isValidServiceSecret(candidate: string): boolean {
+  if (candidate.startsWith("sb_secret_")) return true;
+  const parts = candidate.split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const payload = JSON.parse(
+      Buffer.from(
+        parts[1].replace(/-/g, "+").replace(/_/g, "/"),
+        "base64"
+      ).toString("utf8")
+    ) as { role?: unknown };
+    return payload.role === "service_role";
+  } catch {
+    return false;
+  }
+}
+
+export function isSupabaseAdminConfigured(): boolean {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  return Boolean(supabaseUrl() && key && isValidServiceSecret(key));
+}
+
+let adminClient: SupabaseClient | null = null;
+
+/**
+ * Server-only service client for protected operations. This deliberately
+ * fails closed instead of falling back to a public key.
+ */
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!adminClient) {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    if (!key || !isValidServiceSecret(key)) {
+      throw new Error(
+        "Supabase service access is not configured — set a valid server-only " +
+          "SUPABASE_SERVICE_ROLE_KEY (service_role JWT or sb_secret_… key)."
+      );
+    }
+    const url = supabaseUrl();
+    if (!url) {
+      throw new Error(
+        "Supabase is not configured — set NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL."
+      );
+    }
+    adminClient = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  }
+  return adminClient;
+}
+
 let client: SupabaseClient | null = null;
 
 export function getSupabase(): SupabaseClient {
@@ -63,7 +115,9 @@ export function getSupabase(): SupabaseClient {
       );
     }
 
-    client = createClient(url, key);
+    client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   }
 
   return client;

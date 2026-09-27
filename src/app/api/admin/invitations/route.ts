@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { isAuthorized } from "@/lib/auth";
+import { siteConfig } from "@/config";
+import { isOwnedCloudinaryPublicId } from "@/lib/cloudinary-ownership";
+
+const INVITATIONS_FOLDER = `${siteConfig.cloudinary.meetingFolder}/invitations`;
 
 export async function POST(req: Request) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +19,12 @@ export async function POST(req: Request) {
   const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
-        { folder: "invitations", public_id: date, overwrite: true, resource_type: "image" },
+        {
+          folder: INVITATIONS_FOLDER,
+          public_id: date,
+          overwrite: true,
+          resource_type: "image",
+        },
         (err, res) => (err || !res ? reject(err) : resolve(res))
       )
       .end(buffer);
@@ -28,7 +37,9 @@ export async function DELETE(req: Request) {
   if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { publicId } = await req.json();
-  if (!publicId) return NextResponse.json({ error: "publicId required" }, { status: 400 });
+  if (!isOwnedCloudinaryPublicId(publicId)) {
+    return NextResponse.json({ error: "Invalid asset id" }, { status: 400 });
+  }
 
   await cloudinary.uploader.destroy(publicId);
   return NextResponse.json({ success: true });

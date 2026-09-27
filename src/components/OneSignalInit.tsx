@@ -2,9 +2,21 @@
 
 import Script from "next/script";
 
+type OneSignalSubscription = {
+  id?: string | null;
+  optedIn?: boolean | null;
+  optIn: () => Promise<void>;
+};
+
+type OneSignalClient = {
+  init: (options: Record<string, unknown>) => Promise<void>;
+  User?: { PushSubscription?: OneSignalSubscription };
+  Slidedown: { promptPush: (options: { force: boolean }) => Promise<void> };
+};
+
 declare global {
   interface Window {
-    OneSignalDeferred?: Array<(OneSignal: any) => void | Promise<void>>;
+    OneSignalDeferred?: Array<(OneSignal: OneSignalClient) => void | Promise<void>>;
     __oneSignalInitialized?: boolean;
     __oneSignalPromptPush?: () => Promise<"blocked" | "prompted" | "failed">;
     /**

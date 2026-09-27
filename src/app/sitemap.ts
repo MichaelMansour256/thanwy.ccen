@@ -20,6 +20,7 @@ const pages: {
   { path: "/bible/resources", priority: 0.6, changeFrequency: "monthly", feature: "bible" },
   { path: "/games", priority: 0.6, changeFrequency: "monthly", feature: "games" },
   { path: "/more", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/more/notifications", priority: 0.6, changeFrequency: "weekly", feature: "notifications" },
   { path: "/more/about", priority: 0.7, changeFrequency: "monthly", feature: "about" },
   { path: "/more/gallery", priority: 0.7, changeFrequency: "weekly", feature: "gallery" },
   { path: "/more/servants", priority: 0.5, changeFrequency: "monthly", feature: "servants" },

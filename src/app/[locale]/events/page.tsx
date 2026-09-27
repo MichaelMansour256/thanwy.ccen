@@ -83,8 +83,8 @@ export default function EventsPage() {
   const past = events.filter((e) => e.date < today);
 
   // Next meeting-day invitation
-  const nextFriday = getNextMeetingISO();
-  const nextInvitation = invitations.find((i) => i.date === nextFriday);
+  const nextMeeting = getNextMeetingISO();
+  const nextInvitation = invitations.find((i) => i.date === nextMeeting);
 
   return (
     <div className="min-h-dvh page-gradient">
@@ -94,7 +94,7 @@ export default function EventsPage() {
         <WeeklyMeetingCard />
       </div>
 
-      {/* Next Friday invitation banner */}
+      {/* Upcoming meeting invitation banner */}
       {nextInvitation && (
         <button onClick={() => setFullscreenImg(nextInvitation.url)}
           className="mx-4 mb-2 w-[calc(100%-2rem)] overflow-hidden rounded-2xl border border-blue-accent/30 shadow-lg shadow-blue-accent/10 active:scale-95 transition">

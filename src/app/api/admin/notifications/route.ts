@@ -78,10 +78,7 @@ export async function GET(req: Request) {
         contents,
         web_url,
         queued_at,
-        completed_at,
         successful,
-        failed,
-        errored,
         canceled,
         sent_at,
       }: {
@@ -90,10 +87,7 @@ export async function GET(req: Request) {
         contents: { en?: string; ar?: string };
         web_url: string | null;
         queued_at: number;
-        completed_at: number | null;
         successful: number;
-        failed: number;
-        errored: number;
         canceled: boolean;
         sent_at?: number;
       }) => ({

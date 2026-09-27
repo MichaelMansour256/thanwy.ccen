@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "../globals.css";
 import { siteConfig, themeCssVars } from "@/config";
 
-export const metadata: Metadata = { title: `Admin — ${siteConfig.shortName}` };
+export const metadata: Metadata = {
+  title: `Admin — ${siteConfig.shortName}`,
+  robots: { index: false, follow: false },
+};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (

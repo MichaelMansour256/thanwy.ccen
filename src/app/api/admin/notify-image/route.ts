@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import cloudinary from "@/lib/cloudinary";
 import { isAuthorized } from "@/lib/auth";
+import { siteConfig } from "@/config";
 
 /**
  * Upload a one-off notification image from the admin's device.
  * Auth: x-admin-password header. Body: multipart FormData { file }.
- * Stores under `notifications/` with a timestamped public_id so it never
- * collides with invitation dates. Returns { url }.
+ * Stores under the meeting-owned `<meetingFolder>/notifications/` namespace with
+ * a timestamped public_id so it never collides with invitation dates. Returns
+ * { url }.
  */
 export async function POST(req: Request) {
   if (!isAuthorized(req)) {
@@ -26,7 +28,7 @@ export async function POST(req: Request) {
       cloudinary.uploader
         .upload_stream(
           {
-            folder: "notifications",
+            folder: `${siteConfig.cloudinary.meetingFolder}/notifications`,
             public_id: `manual-${stamp}`,
             overwrite: true,
             resource_type: "image",

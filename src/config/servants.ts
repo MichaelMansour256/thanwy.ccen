@@ -36,6 +36,7 @@ export const servants: Servant[] = [
   { file: "Magdy Nabil.jpg", name: "Magdy Nabil", nameAr: "مجدي نبيل" },
   { file: "Mervat Nageh.jpg", name: "Mervat Nageh", nameAr: "ميرڤت ناجح" },
   { file: "Noha Naiem.jpg", name: "Noha Naiem", nameAr: "نهى نعيم" },
+  { file: "Andrew Ehab.jpg", name: "Andrew Ehab", nameAr: "أندرو إيهاب" },
   
   
 ];

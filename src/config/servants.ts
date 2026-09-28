@@ -29,13 +29,13 @@ export const servantsTitleAr = "الخدام";
 /** Servants of this meeting — empty until this meeting's data is added. */
 export const servants: Servant[] = [
   
-  { file: "ehab youssef.jpg", name: "Ehab Youssef", nameAr: "إيهاب يوسف" },
+  
   { file: "Emad Karam.jpg", name: "Emad Karam", nameAr: "عماد كرم" },
-  { file: "Beshoy saad.jpg", name: "Beshoy saad", nameAr: "بيشوي سعد" },
-  { file: "Jakleen khristan.jpg", name: "Jakleen khristan", nameAr: "چاكلين" },
   { file: "Magdy Nabil.jpg", name: "Magdy Nabil", nameAr: "مجدي نبيل" },
-  { file: "Mervat Nageh.jpg", name: "Mervat Nageh", nameAr: "ميرڤت ناجح" },
+  { file: "Jakleen khristan.jpg", name: "Jakleen khristan", nameAr: "چاكلين خرستان" },
   { file: "Noha Naiem.jpg", name: "Noha Naiem", nameAr: "نهى نعيم" },
+  { file: "Mervat Nageh.jpg", name: "Mervat Nageh", nameAr: "ميرڤت ناجح" },
+  { file: "Beshoy saad.jpg", name: "Beshoy saad", nameAr: "بيشوي سعد" },
   { file: "Andrew Ehab.jpg", name: "Andrew Ehab", nameAr: "أندرو إيهاب" },
   
   
